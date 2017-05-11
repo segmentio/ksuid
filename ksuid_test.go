@@ -17,19 +17,19 @@ func TestConstructionTimestamp(t *testing.T) {
 }
 
 func TestNil(t *testing.T) {
-	if !Nil.Nil() {
+	if !Nil.IsNil() {
 		t.Fatal("Nil should be Nil!")
 	}
 
 	x, _ := FromBytes(make([]byte, ByteLength))
-	if !x.Nil() {
+	if !x.IsNil() {
 		t.Fatal("Zero-byte array should be Nil!")
 	}
 }
 
 func TestEncoding(t *testing.T) {
 	x, _ := FromBytes(make([]byte, ByteLength))
-	if !x.Nil() {
+	if !x.IsNil() {
 		t.Fatal("Zero-byte array should be Nil!")
 	}
 

@@ -39,8 +39,12 @@ type KSUID [ByteLength]byte
 var (
 	rander = rand.Reader
 
-	errSize    = fmt.Errorf("Valid KSUIDs are %v bytes", ByteLength)
-	errStrSize = fmt.Errorf("Valid encoded KSUIDs are %v characters", StringEncodedLength)
+	errSize        = fmt.Errorf("Valid KSUIDs are %v bytes", ByteLength)
+	errStrSize     = fmt.Errorf("Valid encoded KSUIDs are %v characters", StringEncodedLength)
+	errPayloadSize = fmt.Errorf("Valid KSUID payloads are %v bytes", PayloadLengthInBytes)
+
+	paddingZeroesStr   = strings.Repeat("0", StringEncodedLength)
+	paddingZeroesBytes = make([]byte, ByteLength)
 
 	// Represents a completely empty (invalid) KSUID
 	Nil KSUID
@@ -68,29 +72,22 @@ func (i KSUID) String() string {
 
 	padAmount := StringEncodedLength - len(encoded)
 	if padAmount > 0 {
-		return strings.Repeat("0", padAmount) + encoded
+		return paddingZeroesStr[:padAmount] + encoded
 	}
 
 	return encoded
 }
 
-// The underlying buffer for this KSUID
-func (i KSUID) buffer() []byte {
-	return i[:]
-}
-
 // Raw byte representation of KSUID
 func (i KSUID) Bytes() []byte {
 	out := make([]byte, ByteLength)
-	for i, b := range i {
-		out[i] = b
-	}
+	copy(out, i[:])
 	return out
 }
 
 // Returns true if this is a "nil" KSUID
-func (i KSUID) Nil() bool {
-	return Compare(Nil, i) == 0
+func (i KSUID) IsNil() bool {
+	return i == Nil
 }
 
 // Decodes a string-encoded representation of a KSUID object
@@ -102,7 +99,7 @@ func Parse(s string) (KSUID, error) {
 	decoded := decodeBase62(s)
 	padAmount := ByteLength - len(decoded)
 	if padAmount > 0 {
-		decoded = append(make([]byte, padAmount), decoded...)
+		decoded = append(paddingZeroesBytes[:padAmount], decoded...)
 	}
 
 	return FromBytes(decoded)
@@ -116,22 +113,47 @@ func correctedUTCTimestampToTime(ts uint32) time.Time {
 	return time.Unix(int64(ts)+EpochStamp, 0)
 }
 
-// Generates a new KSUID
+// Generates a new KSUID. In the strange case that random bytes
+// can't be read, it will panic.
 func New() KSUID {
-	var ksuid KSUID
-
-	// Fill in the payload bytes with random stuff
-	_, err := io.ReadFull(rander, ksuid[4:])
+	ksuid, err := NewRandom()
 	if err != nil {
-		return Nil
+		panic(fmt.Sprintf("Couldn't generate KSUID, inconceivable! error: %v", err))
+	}
+	return ksuid
+}
+
+// Generates a new KSUID
+func NewRandom() (KSUID, error) {
+	payload := make([]byte, PayloadLengthInBytes)
+
+	_, err := io.ReadFull(rander, payload)
+	if err != nil {
+		return Nil, err
 	}
 
-	// Grab the current timestamp and fill in the timestamp portion
-	now := time.Now()
-	ts := timeToCorrectedUTCTimestamp(now)
-	binary.BigEndian.PutUint32(ksuid[:4], ts)
+	ksuid, err := FromParts(time.Now(), payload)
+	if err != nil {
+		return Nil, err
+	}
 
-	return ksuid
+	return ksuid, nil
+}
+
+// Constructs a KSUID from constituent parts
+func FromParts(t time.Time, payload []byte) (KSUID, error) {
+	if len(payload) != PayloadLengthInBytes {
+		return Nil, errPayloadSize
+	}
+
+	var ksuid KSUID
+
+	ts := timeToCorrectedUTCTimestamp(t)
+	binary.BigEndian.PutUint32(ksuid[:TimestampLengthInBytes], ts)
+
+	copy(ksuid[TimestampLengthInBytes:], payload)
+
+	return ksuid, nil
 }
 
 // Constructs a KSUID from a 20-byte binary representation
@@ -142,14 +164,14 @@ func FromBytes(b []byte) (KSUID, error) {
 		return Nil, errSize
 	}
 
-	for i := 0; i < ByteLength; i++ {
-		ksuid[i] = b[i]
-	}
-
+	copy(ksuid[:], b)
 	return ksuid, nil
 }
 
-// Sets the global source of random bytes for KSUID generation.
+// Sets the global source of random bytes for KSUID generation. This
+// should probably only be set once globally. While this is technically
+// thread-safe as in it won't cause corruption, there's no guarantee
+// on ordering.
 func SetRand(r io.Reader) {
 	if r == nil {
 		rander = rand.Reader
@@ -160,5 +182,5 @@ func SetRand(r io.Reader) {
 
 // Implements comparison for KSUID type
 func Compare(a, b KSUID) int {
-	return bytes.Compare(a.buffer(), b.buffer())
+	return bytes.Compare(a[:], b[:])
 }
