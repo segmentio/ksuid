@@ -21,20 +21,20 @@ func TestNil(t *testing.T) {
 		t.Fatal("Nil should be Nil!")
 	}
 
-	x, _ := FromBytes(make([]byte, ByteLength))
+	x, _ := FromBytes(make([]byte, byteLength))
 	if !x.IsNil() {
 		t.Fatal("Zero-byte array should be Nil!")
 	}
 }
 
 func TestEncoding(t *testing.T) {
-	x, _ := FromBytes(make([]byte, ByteLength))
+	x, _ := FromBytes(make([]byte, byteLength))
 	if !x.IsNil() {
 		t.Fatal("Zero-byte array should be Nil!")
 	}
 
 	encoded := x.String()
-	expected := strings.Repeat("0", StringEncodedLength)
+	expected := strings.Repeat("0", stringEncodedLength)
 
 	if encoded != expected {
 		t.Fatal("expected", expected, "encoded", encoded)
@@ -42,8 +42,8 @@ func TestEncoding(t *testing.T) {
 }
 
 func TestPadding(t *testing.T) {
-	b := make([]byte, ByteLength)
-	for i := 0; i < ByteLength; i++ {
+	b := make([]byte, byteLength)
+	for i := 0; i < byteLength; i++ {
 		b[i] = 255
 	}
 
@@ -62,7 +62,7 @@ func TestParse(t *testing.T) {
 		t.Fatal("Expected Parsing a 3-char string to return an error")
 	}
 
-	parsed, err := Parse(strings.Repeat("0", StringEncodedLength))
+	parsed, err := Parse(strings.Repeat("0", stringEncodedLength))
 	if err != nil {
 		t.Fatal("Unexpected error", err)
 	}
@@ -73,8 +73,8 @@ func TestParse(t *testing.T) {
 			"actual:", parsed)
 	}
 
-	maxBytes := make([]byte, ByteLength)
-	for i := 0; i < ByteLength; i++ {
+	maxBytes := make([]byte, byteLength)
+	for i := 0; i < byteLength; i++ {
 		maxBytes[i] = 255
 	}
 	maxBytesKSUID, err := FromBytes(maxBytes)
@@ -82,7 +82,7 @@ func TestParse(t *testing.T) {
 		t.Fatal("Unexpected error", err)
 	}
 
-	maxParseKSUID, err := Parse(MaxStringEncoded)
+	maxParseKSUID, err := Parse(maxStringEncoded)
 	if err != nil {
 		t.Fatal("Unexpected error", err)
 	}

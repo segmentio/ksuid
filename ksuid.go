@@ -14,38 +14,38 @@ const (
 	// KSUID's epoch starts more recently so that the 32-bit number space gives a
 	// significantly higher useful lifetime of around 136 years from March 2017.
 	// This number (14e8) was picked to be easy to remember.
-	EpochStamp int64 = 1400000000
+	epochStamp int64 = 1400000000
 
 	// Timestamp is a uint32
-	TimestampLengthInBytes = 4
+	timestampLengthInBytes = 4
 
 	// Payload is 16-bytes
-	PayloadLengthInBytes = 16
+	payloadLengthInBytes = 16
 
 	// KSUIDs are 20 bytes when binary encoded
-	ByteLength = TimestampLengthInBytes + PayloadLengthInBytes
+	byteLength = timestampLengthInBytes + payloadLengthInBytes
 
 	// The length of a KSUID when string (base62) encoded
-	StringEncodedLength = 27
+	stringEncodedLength = 27
 
 	// A string-encoded maximum value for a KSUID
-	MaxStringEncoded = "aWgEPTl1tmebfsQzFP4bxwgy80V"
+	maxStringEncoded = "aWgEPTl1tmebfsQzFP4bxwgy80V"
 )
 
 // KSUIDs are 20 bytes:
 //  00-03 byte: uint32 BE UTC timestamp with custom epoch
 //  04-19 byte: random "payload"
-type KSUID [ByteLength]byte
+type KSUID [byteLength]byte
 
 var (
 	rander = rand.Reader
 
-	errSize        = fmt.Errorf("Valid KSUIDs are %v bytes", ByteLength)
-	errStrSize     = fmt.Errorf("Valid encoded KSUIDs are %v characters", StringEncodedLength)
-	errPayloadSize = fmt.Errorf("Valid KSUID payloads are %v bytes", PayloadLengthInBytes)
+	errSize        = fmt.Errorf("Valid KSUIDs are %v bytes", byteLength)
+	errStrSize     = fmt.Errorf("Valid encoded KSUIDs are %v characters", stringEncodedLength)
+	errPayloadSize = fmt.Errorf("Valid KSUID payloads are %v bytes", payloadLengthInBytes)
 
-	paddingZeroesStr   = strings.Repeat("0", StringEncodedLength)
-	paddingZeroesBytes = make([]byte, ByteLength)
+	paddingZeroesStr   = strings.Repeat("0", stringEncodedLength)
+	paddingZeroesBytes = make([]byte, byteLength)
 
 	// Represents a completely empty (invalid) KSUID
 	Nil KSUID
@@ -59,19 +59,19 @@ func (i KSUID) Time() time.Time {
 // The timestamp portion of the ID as a bare integer which is uncorrected
 // for KSUID's special epoch.
 func (i KSUID) Timestamp() uint32 {
-	return binary.BigEndian.Uint32(i[:TimestampLengthInBytes])
+	return binary.BigEndian.Uint32(i[:timestampLengthInBytes])
 }
 
 // The 16-byte random payload without the timestamp
 func (i KSUID) Payload() []byte {
-	return i[TimestampLengthInBytes:]
+	return i[timestampLengthInBytes:]
 }
 
 // String-encoded representation that can be passed through Parse()
 func (i KSUID) String() string {
 	encoded := encodeBase62(i[:])
 
-	padAmount := StringEncodedLength - len(encoded)
+	padAmount := stringEncodedLength - len(encoded)
 	if padAmount > 0 {
 		return paddingZeroesStr[:padAmount] + encoded
 	}
@@ -81,7 +81,7 @@ func (i KSUID) String() string {
 
 // Raw byte representation of KSUID
 func (i KSUID) Bytes() []byte {
-	out := make([]byte, ByteLength)
+	out := make([]byte, byteLength)
 	copy(out, i[:])
 	return out
 }
@@ -93,12 +93,12 @@ func (i KSUID) IsNil() bool {
 
 // Decodes a string-encoded representation of a KSUID object
 func Parse(s string) (KSUID, error) {
-	if len(s) != StringEncodedLength {
+	if len(s) != stringEncodedLength {
 		return Nil, errStrSize
 	}
 
 	decoded := decodeBase62(s)
-	padAmount := ByteLength - len(decoded)
+	padAmount := byteLength - len(decoded)
 	if padAmount > 0 {
 		decoded = append(paddingZeroesBytes[:padAmount], decoded...)
 	}
@@ -107,11 +107,11 @@ func Parse(s string) (KSUID, error) {
 }
 
 func timeToCorrectedUTCTimestamp(t time.Time) uint32 {
-	return uint32(t.Unix() - EpochStamp)
+	return uint32(t.Unix() - epochStamp)
 }
 
 func correctedUTCTimestampToTime(ts uint32) time.Time {
-	return time.Unix(int64(ts)+EpochStamp, 0)
+	return time.Unix(int64(ts)+epochStamp, 0)
 }
 
 // Generates a new KSUID. In the strange case that random bytes
@@ -126,7 +126,7 @@ func New() KSUID {
 
 // Generates a new KSUID
 func NewRandom() (KSUID, error) {
-	payload := make([]byte, PayloadLengthInBytes)
+	payload := make([]byte, payloadLengthInBytes)
 
 	_, err := io.ReadFull(rander, payload)
 	if err != nil {
@@ -143,16 +143,16 @@ func NewRandom() (KSUID, error) {
 
 // Constructs a KSUID from constituent parts
 func FromParts(t time.Time, payload []byte) (KSUID, error) {
-	if len(payload) != PayloadLengthInBytes {
+	if len(payload) != payloadLengthInBytes {
 		return Nil, errPayloadSize
 	}
 
 	var ksuid KSUID
 
 	ts := timeToCorrectedUTCTimestamp(t)
-	binary.BigEndian.PutUint32(ksuid[:TimestampLengthInBytes], ts)
+	binary.BigEndian.PutUint32(ksuid[:timestampLengthInBytes], ts)
 
-	copy(ksuid[TimestampLengthInBytes:], payload)
+	copy(ksuid[timestampLengthInBytes:], payload)
 
 	return ksuid, nil
 }
@@ -161,7 +161,7 @@ func FromParts(t time.Time, payload []byte) (KSUID, error) {
 func FromBytes(b []byte) (KSUID, error) {
 	var ksuid KSUID
 
-	if len(b) != ByteLength {
+	if len(b) != byteLength {
 		return Nil, errSize
 	}
 
