@@ -1,6 +1,10 @@
 package ksuid
 
 import (
+	"bytes"
+	"encoding/json"
+	"flag"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -101,5 +105,114 @@ func TestEncodeAndDecode(t *testing.T) {
 
 	if Compare(x, builtFromEncodedString) != 0 {
 		t.Fatal("Parse(X).String() != X")
+	}
+}
+
+func TestMarshalText(t *testing.T) {
+	var id1 = New()
+	var id2 KSUID
+
+	if err := id2.UnmarshalText([]byte(id1.String())); err != nil {
+		t.Fatal(err)
+	}
+
+	if id1 != id2 {
+		t.Fatal(id1, "!=", id2)
+	}
+
+	if b, err := id2.MarshalText(); err != nil {
+		t.Fatal(err)
+	} else if s := string(b); s != id1.String() {
+		t.Fatal(s)
+	}
+}
+
+func TestMarshalBinary(t *testing.T) {
+	var id1 = New()
+	var id2 KSUID
+
+	if err := id2.UnmarshalBinary(id1.Bytes()); err != nil {
+		t.Fatal(err)
+	}
+
+	if id1 != id2 {
+		t.Fatal(id1, "!=", id2)
+	}
+
+	if b, err := id2.MarshalBinary(); err != nil {
+		t.Fatal(err)
+	} else if bytes.Compare(b, id1.Bytes()) != 0 {
+		t.Fatal("bad binary form:", id2)
+	}
+}
+
+func TestMashalJSON(t *testing.T) {
+	var id1 = New()
+	var id2 KSUID
+
+	if b, err := json.Marshal(id1); err != nil {
+		t.Fatal(err)
+	} else if err := json.Unmarshal(b, &id2); err != nil {
+		t.Fatal(err)
+	} else if id1 != id2 {
+		t.Error(id1, "!=", id2)
+	}
+}
+
+func TestFlag(t *testing.T) {
+	var id1 = New()
+	var id2 KSUID
+
+	fset := flag.NewFlagSet("test", flag.ContinueOnError)
+	fset.Var(&id2, "id", "the KSUID")
+
+	if err := fset.Parse([]string{"-id", id1.String()}); err != nil {
+		t.Fatal(err)
+	}
+
+	if id1 != id2 {
+		t.Error(id1, "!=", id2)
+	}
+}
+
+func TestSqlValuer(t *testing.T) {
+	id, _ := Parse(maxStringEncoded)
+
+	if v, err := id.Value(); err != nil {
+		t.Error(err)
+	} else if s, ok := v.(string); !ok {
+		t.Error("not a string value")
+	} else if s != maxStringEncoded {
+		t.Error("bad string value::", s)
+	}
+}
+
+func TestSqlScanner(t *testing.T) {
+	id1 := New()
+	id2 := New()
+
+	tests := []struct {
+		ksuid KSUID
+		value interface{}
+	}{
+		{Nil, nil},
+		{id1, id1.String()},
+		{id2, id2.Bytes()},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%T", test.value), func(t *testing.T) {
+			var id KSUID
+
+			if err := id.Scan(test.value); err != nil {
+				t.Error(err)
+			}
+
+			if id != test.ksuid {
+				t.Error("bad KSUID:")
+				t.Logf("expected %v", test.ksuid)
+				t.Logf("found    %v", id)
+			}
+		})
 	}
 }
