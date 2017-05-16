@@ -160,7 +160,7 @@ func (i *KSUID) scan(b []byte) error {
 	case byteLength:
 		return i.UnmarshalBinary(b)
 	case stringEncodedLength:
-		return i.UnmarshalText([]byte(b))
+		return i.UnmarshalText(b)
 	default:
 		return errSize
 	}
