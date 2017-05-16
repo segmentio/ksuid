@@ -14,14 +14,21 @@ import (
 	"github.com/segmentio/ksuid"
 )
 
-func main() {
-	var count int
-	var format string
-	var template string
+var (
+	count   int
+	format  string
+	tpltxt  string
+	verbose bool
+)
 
-	flag.IntVar(&count, "n", 1, "Number of KSUIDs to generate when called with no other arguments")
-	flag.StringVar(&format, "f", "inspect", "One of inspect, time, timestamp, payload, raw, or template")
-	flag.StringVar(&template, "t", "", "The Go template used to format the output")
+func init() {
+	flag.IntVar(&count, "n", 1, "Number of KSUIDs to generate when called with no other arguments.")
+	flag.StringVar(&format, "f", "inspect", "One of inspect, time, timestamp, payload, raw, or template.")
+	flag.StringVar(&tpltxt, "t", "", "The Go template used to format the output.")
+	flag.BoolVar(&verbose, "v", false, "Turn on verbose mode.")
+}
+
+func main() {
 	flag.Parse()
 	args := flag.Args()
 
@@ -38,7 +45,7 @@ func main() {
 	case "raw":
 		print = printRaw
 	case "template":
-		print = func(id ksuid.KSUID) { printTemplate(id, template) }
+		print = printTemplate
 	default:
 		fmt.Println("Bad formatting function:", format)
 		os.Exit(1)
@@ -63,12 +70,16 @@ func main() {
 	}
 
 	for _, id := range ids {
+		if verbose {
+			fmt.Printf("%s: ", id)
+		}
 		print(id)
 	}
 }
 
 func printInspect(id ksuid.KSUID) {
-	const inspectFormat = `REPRESENTATION:
+	const inspectFormat = `
+REPRESENTATION:
 
   String: %v
      Raw: %v
@@ -105,9 +116,9 @@ func printRaw(id ksuid.KSUID) {
 	os.Stdout.Write(id.Bytes())
 }
 
-func printTemplate(id ksuid.KSUID, format string) {
+func printTemplate(id ksuid.KSUID) {
 	b := &bytes.Buffer{}
-	t := template.Must(template.New("").Parse(format))
+	t := template.Must(template.New("").Parse(tpltxt))
 	t.Execute(b, struct {
 		String    string
 		Raw       string
