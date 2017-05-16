@@ -3,6 +3,7 @@ package ksuid
 import (
 	"bytes"
 	"crypto/rand"
+	"database/sql/driver"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -126,6 +127,42 @@ func (i *KSUID) UnmarshalBinary(b []byte) error {
 	}
 	*i = id
 	return nil
+}
+
+// Value converts the KSUID into a SQL driver value which can be used to
+// directly use the KSUID as parameter to a SQL query.
+func (i KSUID) Value() (driver.Value, error) {
+	return i.String(), nil
+}
+
+// Scan implements the sql.Scanner interface. It supports converting from
+// string, []byte, or nil into a KSUID value. Attempting to convert from
+// another type will return an error.
+func (i *KSUID) Scan(src interface{}) error {
+	switch v := src.(type) {
+	case nil:
+		return i.scan(nil)
+	case []byte:
+		return i.scan(v)
+	case string:
+		return i.scan([]byte(v))
+	default:
+		return fmt.Errorf("Scan: unable to scan type %T into KSUID", v)
+	}
+}
+
+func (i *KSUID) scan(b []byte) error {
+	switch len(b) {
+	case 0:
+		*i = Nil
+		return nil
+	case byteLength:
+		return i.UnmarshalBinary(b)
+	case stringEncodedLength:
+		return i.UnmarshalText(b)
+	default:
+		return errSize
+	}
 }
 
 // Decodes a string-encoded representation of a KSUID object
