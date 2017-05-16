@@ -81,9 +81,8 @@ func (i KSUID) String() string {
 
 // Raw byte representation of KSUID
 func (i KSUID) Bytes() []byte {
-	out := make([]byte, byteLength)
-	copy(out, i[:])
-	return out
+	// Safe because this is by-value
+	return i[:]
 }
 
 // Returns true if this is a "nil" KSUID
