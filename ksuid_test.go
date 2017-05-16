@@ -3,6 +3,7 @@ package ksuid
 import (
 	"bytes"
 	"encoding/json"
+	"flag"
 	"strings"
 	"testing"
 	"time"
@@ -153,6 +154,22 @@ func TestMashalJSON(t *testing.T) {
 	} else if err := json.Unmarshal(b, &id2); err != nil {
 		t.Fatal(err)
 	} else if id1 != id2 {
+		t.Error(id1, "!=", id2)
+	}
+}
+
+func TestFlag(t *testing.T) {
+	var id1 = New()
+	var id2 KSUID
+
+	fset := flag.NewFlagSet("test", flag.ContinueOnError)
+	fset.Var(&id2, "id", "the KSUID")
+
+	if err := fset.Parse([]string{"-id", id1.String()}); err != nil {
+		t.Fatal(err)
+	}
+
+	if id1 != id2 {
 		t.Error(id1, "!=", id2)
 	}
 }

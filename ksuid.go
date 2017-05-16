@@ -90,6 +90,18 @@ func (i KSUID) IsNil() bool {
 	return i == Nil
 }
 
+// Get satisfies the flag.Getter interface, making it possible to use KSUIDs as
+// part of of the command line options of a program.
+func (i KSUID) Get() interface{} {
+	return i
+}
+
+// Set satisfies the flag.Value interface, making it possible to use KSUIDs as
+// part of of the command line options of a program.
+func (i *KSUID) Set(s string) error {
+	return i.UnmarshalText([]byte(s))
+}
+
 func (i KSUID) MarshalText() ([]byte, error) {
 	return []byte(i.String()), nil
 }
