@@ -176,7 +176,7 @@ func TestFlag(t *testing.T) {
 }
 
 func TestSqlValuer(t *testing.T) {
-	id := parse(maxStringEncoded)
+	id, _ := Parse(maxStringEncoded)
 
 	if v, err := id.Value(); err != nil {
 		t.Error(err)
@@ -188,13 +188,16 @@ func TestSqlValuer(t *testing.T) {
 }
 
 func TestSqlScanner(t *testing.T) {
+	id1 := New()
+	id2 := New()
+
 	tests := []struct {
 		ksuid KSUID
 		value interface{}
 	}{
 		{Nil, nil},
-		{parse(maxStringEncoded), maxStringEncoded},
-		{parse(maxStringEncoded), []byte(maxStringEncoded)},
+		{id1, id1.String()},
+		{id2, id2.Bytes()},
 	}
 
 	for _, test := range tests {
@@ -212,9 +215,4 @@ func TestSqlScanner(t *testing.T) {
 			}
 		})
 	}
-}
-
-func parse(s string) KSUID {
-	id, _ := Parse(s)
-	return id
 }
