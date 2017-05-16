@@ -90,6 +90,31 @@ func (i KSUID) IsNil() bool {
 	return i == Nil
 }
 
+func (i KSUID) MarshalText() ([]byte, error) {
+	return []byte(i.String()), nil
+}
+
+func (i KSUID) MarshalBinary() ([]byte, error) {
+	return i.Bytes(), nil
+}
+
+func (i *KSUID) UnmarshalText(b []byte) error {
+	id, err := Parse(string(b))
+	if err != nil {
+		return err
+	}
+	*i = id
+	return nil
+}
+
+func (i *KSUID) UnmarshalBinary(b []byte) error {
+	if len(b) != byteLength {
+		return errSize
+	}
+	copy((*i)[:], b)
+	return nil
+}
+
 // Decodes a string-encoded representation of a KSUID object
 func Parse(s string) (KSUID, error) {
 	if len(s) != stringEncodedLength {

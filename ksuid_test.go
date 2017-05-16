@@ -1,6 +1,8 @@
 package ksuid
 
 import (
+	"bytes"
+	"encoding/json"
 	"strings"
 	"testing"
 	"time"
@@ -101,5 +103,56 @@ func TestEncodeAndDecode(t *testing.T) {
 
 	if Compare(x, builtFromEncodedString) != 0 {
 		t.Fatal("Parse(X).String() != X")
+	}
+}
+
+func TestMarshalText(t *testing.T) {
+	var id1 = New()
+	var id2 KSUID
+
+	if err := id2.UnmarshalText([]byte(id1.String())); err != nil {
+		t.Fatal(err)
+	}
+
+	if id1 != id2 {
+		t.Fatal(id1, "!=", id2)
+	}
+
+	if b, err := id2.MarshalText(); err != nil {
+		t.Fatal(err)
+	} else if s := string(b); s != id1.String() {
+		t.Fatal(s)
+	}
+}
+
+func TestMarshalBinary(t *testing.T) {
+	var id1 = New()
+	var id2 KSUID
+
+	if err := id2.UnmarshalBinary(id1.Bytes()); err != nil {
+		t.Fatal(err)
+	}
+
+	if id1 != id2 {
+		t.Fatal(id1, "!=", id2)
+	}
+
+	if b, err := id2.MarshalBinary(); err != nil {
+		t.Fatal(err)
+	} else if bytes.Compare(b, id1.Bytes()) != 0 {
+		t.Fatal("bad binary form:", id2)
+	}
+}
+
+func TestMashalJSON(t *testing.T) {
+	var id1 = New()
+	var id2 KSUID
+
+	if b, err := json.Marshal(id1); err != nil {
+		t.Fatal(err)
+	} else if err := json.Unmarshal(b, &id2); err != nil {
+		t.Fatal(err)
+	} else if id1 != id2 {
+		t.Error(id1, "!=", id2)
 	}
 }
