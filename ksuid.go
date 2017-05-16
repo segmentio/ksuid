@@ -142,25 +142,27 @@ func (i KSUID) Value() (driver.Value, error) {
 func (i *KSUID) Scan(src interface{}) error {
 	switch v := src.(type) {
 	case nil:
-		*i = Nil
-		return nil
-
-	case string:
-		if len(v) == 0 {
-			*i = Nil
-			return nil
-		}
-		return i.UnmarshalText([]byte(v))
-
+		return i.scan(nil)
 	case []byte:
-		if len(v) == 0 {
-			*i = Nil
-			return nil
-		}
-		return i.UnmarshalBinary(v)
-
+		return i.scan(v)
+	case string:
+		return i.scan([]byte(v))
 	default:
 		return fmt.Errorf("Scan: unable to scan type %T into KSUID", v)
+	}
+}
+
+func (i *KSUID) scan(b []byte) error {
+	switch len(b) {
+	case 0:
+		*i = Nil
+		return nil
+	case byteLength:
+		return i.UnmarshalBinary(b)
+	case stringEncodedLength:
+		return i.UnmarshalText([]byte(b))
+	default:
+		return errSize
 	}
 }
 
