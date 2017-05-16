@@ -150,7 +150,7 @@ func (i *KSUID) Scan(src interface{}) error {
 			*i = Nil
 			return nil
 		}
-		return i.UnmarshalText(v)
+		return i.UnmarshalText([]byte(v))
 
 	case []byte:
 		if len(v) == 0 {
@@ -160,7 +160,7 @@ func (i *KSUID) Scan(src interface{}) error {
 		return i.UnmarshalBinary(v)
 
 	default:
-		return fmt.Errorf("Scan: unable to scan type %T into UUID", v)
+		return fmt.Errorf("Scan: unable to scan type %T into KSUID", v)
 	}
 }
 

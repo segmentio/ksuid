@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -172,4 +173,48 @@ func TestFlag(t *testing.T) {
 	if id1 != id2 {
 		t.Error(id1, "!=", id2)
 	}
+}
+
+func TestSqlValuer(t *testing.T) {
+	id := parse(maxStringEncoded)
+
+	if v, err := id.Value(); err != nil {
+		t.Error(err)
+	} else if s, ok := v.(string); !ok {
+		t.Error("not a string value")
+	} else if s != maxStringEncoded {
+		t.Error("bad string value::", s)
+	}
+}
+
+func TestSqlScanner(t *testing.T) {
+	tests := []struct {
+		ksuid KSUID
+		value interface{}
+	}{
+		{Nil, nil},
+		{parse(maxStringEncoded), maxStringEncoded},
+		{parse(maxStringEncoded), []byte(maxStringEncoded)},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%T", test.value), func(t *testing.T) {
+			var id KSUID
+
+			if err := id.Scan(test.value); err != nil {
+				t.Error(err)
+			}
+
+			if id != test.ksuid {
+				t.Error("bad KSUID:")
+				t.Logf("expected %v", test.ksuid)
+				t.Logf("found    %v", id)
+			}
+		})
+	}
+}
+
+func parse(s string) KSUID {
+	id, _ := Parse(s)
+	return id
 }
