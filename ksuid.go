@@ -108,10 +108,11 @@ func (i *KSUID) UnmarshalText(b []byte) error {
 }
 
 func (i *KSUID) UnmarshalBinary(b []byte) error {
-	if len(b) != byteLength {
-		return errSize
+	id, err := FromBytes(b)
+	if err != nil {
+		return err
 	}
-	copy((*i)[:], b)
+	*i = id
 	return nil
 }
 
