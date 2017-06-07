@@ -28,7 +28,7 @@ increases the complexity of implementation and creates operations overhead.
 While RFC 4122 UUIDv1s do have a time component, there aren't enough bytes of
 randomness to provide strong protections against duplicate ID generation.
 
-KSUIDs use 128-bits of psuedorandom data, which provides a 64-times larger
+KSUIDs use 128-bits of pseudorandom data, which provides a 64-times larger
 number space than the 122-bits in the well-accepted RFC 4122 UUIDv4 standard.
 The additional timestamp component drives down the extremely rare chance of
 duplication to the point of near physical infeasibility, even assuming extreme
