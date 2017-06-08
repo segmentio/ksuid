@@ -222,7 +222,7 @@ func BenchmarkAppend(b *testing.B) {
 	k := New()
 
 	for i := 0; i != b.N; i++ {
-		Append(a, k)
+		k.Append(a)
 	}
 }
 

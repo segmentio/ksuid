@@ -54,7 +54,7 @@ var (
 
 // Append appends the string representation of i to b, returning a slice to a
 // potentially larger memory area.
-func Append(b []byte, i KSUID) []byte {
+func (i KSUID) Append(b []byte) []byte {
 	// This is an optimization that ensures we do at most one memory allocation
 	// when the byte slice capacity is lower than the length of the string
 	// representation of the KSUID.
@@ -94,7 +94,7 @@ func (i KSUID) Payload() []byte {
 
 // String-encoded representation that can be passed through Parse()
 func (i KSUID) String() string {
-	return string(Append(make([]byte, 0, stringEncodedLength), i))
+	return string(i.Append(make([]byte, 0, stringEncodedLength)))
 }
 
 // Raw byte representation of KSUID
