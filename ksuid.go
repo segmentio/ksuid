@@ -52,6 +52,30 @@ var (
 	Nil KSUID
 )
 
+// Append appends the string representation of i to b, returning a slice to a
+// potentially larger memory area.
+func Append(b []byte, i KSUID) []byte {
+	// This is an optimization that ensures we do at most one memory allocation
+	// when the byte slice capacity is lower than the length of the string
+	// representation of the KSUID.
+	if cap(b) < stringEncodedLength {
+		c := make([]byte, len(b), len(b)+stringEncodedLength)
+		copy(c, b)
+		b = c
+	}
+
+	off := len(b)
+	b = appendEncodeBase62(b, i[:])
+
+	if pad := stringEncodedLength - (len(b) - off); pad > 0 {
+		b = append(b, paddingZeroesStr[:pad]...)
+		copy(b[pad:], b)
+		copy(b, paddingZeroesStr[:pad])
+	}
+
+	return b
+}
+
 // The timestamp portion of the ID as a Time object
 func (i KSUID) Time() time.Time {
 	return correctedUTCTimestampToTime(i.Timestamp())
@@ -70,14 +94,7 @@ func (i KSUID) Payload() []byte {
 
 // String-encoded representation that can be passed through Parse()
 func (i KSUID) String() string {
-	encoded := encodeBase62(i[:])
-
-	padAmount := stringEncodedLength - len(encoded)
-	if padAmount > 0 {
-		return paddingZeroesStr[:padAmount] + encoded
-	}
-
-	return encoded
+	return string(Append(make([]byte, 0, stringEncodedLength), i))
 }
 
 // Raw byte representation of KSUID
@@ -171,13 +188,18 @@ func Parse(s string) (KSUID, error) {
 		return Nil, errStrSize
 	}
 
-	decoded := decodeBase62(s)
-	padAmount := byteLength - len(decoded)
-	if padAmount > 0 {
-		decoded = append(paddingZeroesBytes[:padAmount], decoded...)
+	src := [stringEncodedLength]byte{}
+	dst := [byteLength]byte{}
+
+	copy(src[:], s[:])
+	decoded := appendDecodeBase62(dst[:0], src[:])
+
+	if pad := byteLength - len(decoded); pad > 0 {
+		copy(dst[pad:], dst[:])
+		copy(dst[:], paddingZeroesBytes[:pad])
 	}
 
-	return FromBytes(decoded)
+	return FromBytes(dst[:])
 }
 
 func timeToCorrectedUTCTimestamp(t time.Time) uint32 {

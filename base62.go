@@ -1,17 +1,17 @@
 package ksuid
 
-import "bytes"
+import "strings"
 
 // lexographic ordering (based on Unicode table) is 0-9A-Za-z
-var base62Characters = []byte("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
+var base62Characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 
-func base2base(in []byte, inBase int, outBase int) []byte {
-	res := []byte{}
-	bs := in[:]
+func appendBase2Base(dst []byte, src []byte, inBase int, outBase int) []byte {
+	bs := src[:]
+	bq := [stringEncodedLength]byte{}
 
 	for len(bs) > 0 {
 		length := len(bs)
-		quotient := []byte{}
+		quotient := bq[:0]
 		remainder := 0
 
 		for i := 0; i != length; i++ {
@@ -25,28 +25,54 @@ func base2base(in []byte, inBase int, outBase int) []byte {
 		}
 
 		// this is really a prepend or remainder to result
-		res = append([]byte{byte(remainder)}, res...)
+		dst = append(dst, byte(remainder))
 		bs = quotient
 	}
 
-	return res
+	reverse(dst)
+	return dst
 }
 
-func encodeBase62(in []byte) string {
-	encoded := base2base(in, 256, 62)
-	for i, b := range encoded {
-		encoded[i] = base62Characters[b]
+func base2base(src []byte, inBase int, outBase int) []byte {
+	return appendBase2Base(nil, src, inBase, outBase)
+}
+
+func appendEncodeBase62(dst []byte, src []byte) []byte {
+	dst = appendBase2Base(dst, src, 256, 62)
+	for i, c := range dst {
+		dst[i] = base62Characters[c]
 	}
-	return string(encoded)
+	return dst
 }
 
-func decodeBase62(in string) []byte {
-	bs := []byte(in)
-	decoded := make([]byte, len(bs))
-	for i, b := range bs {
+func encodeBase62(in []byte) []byte {
+	return appendEncodeBase62(nil, in)
+}
+
+func appendDecodeBase62(dst []byte, src []byte) []byte {
+	// Kind of intrusive, we modify the input buffer... it's OK here, it saves
+	// a memory allocation in Parse.
+	for i, b := range src {
 		// O(1)... technically. Has better real-world perf than a map
-		decoded[i] = byte(bytes.IndexByte(base62Characters, b))
+		src[i] = byte(strings.IndexByte(base62Characters, b))
 	}
+	return appendBase2Base(dst, src, 62, 256)
+}
 
-	return base2base(decoded, 62, 256)
+func decodeBase62(src []byte) []byte {
+	return appendDecodeBase62(
+		make([]byte, 0, len(src)*2),
+		append(make([]byte, 0, len(src)), src...),
+	)
+}
+
+func reverse(b []byte) {
+	i := 0
+	j := len(b) - 1
+
+	for i < j {
+		b[i], b[j] = b[j], b[i]
+		i++
+		j--
+	}
 }

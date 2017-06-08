@@ -216,3 +216,26 @@ func TestSqlScanner(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkAppend(b *testing.B) {
+	a := make([]byte, 0, stringEncodedLength)
+	k := New()
+
+	for i := 0; i != b.N; i++ {
+		Append(a, k)
+	}
+}
+
+func BenchmarkString(b *testing.B) {
+	k := New()
+
+	for i := 0; i != b.N; i++ {
+		k.String()
+	}
+}
+
+func BenchmarkParse(b *testing.B) {
+	for i := 0; i != b.N; i++ {
+		Parse(maxStringEncoded)
+	}
+}

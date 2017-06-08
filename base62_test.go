@@ -45,7 +45,7 @@ func TestEncodeAndDecodeBase62(t *testing.T) {
 func TestLexographicOrdering(t *testing.T) {
 	unsortedStrings := make([]string, 256)
 	for i := 0; i < 256; i++ {
-		s := encodeBase62([]byte{0, byte(i)})
+		s := string(encodeBase62([]byte{0, byte(i)}))
 		unsortedStrings[i] = strings.Repeat("0", 2-len(s)) + s
 	}
 
