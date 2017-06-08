@@ -7,7 +7,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"strings"
 	"time"
 )
 
@@ -45,9 +44,6 @@ var (
 	errStrSize     = fmt.Errorf("Valid encoded KSUIDs are %v characters", stringEncodedLength)
 	errPayloadSize = fmt.Errorf("Valid KSUID payloads are %v bytes", payloadLengthInBytes)
 
-	paddingZeroesStr   = strings.Repeat("0", stringEncodedLength)
-	paddingZeroesBytes = make([]byte, byteLength)
-
 	// Represents a completely empty (invalid) KSUID
 	Nil KSUID
 )
@@ -68,9 +64,14 @@ func (i KSUID) Append(b []byte) []byte {
 	b = appendEncodeBase62(b, i[:])
 
 	if pad := stringEncodedLength - (len(b) - off); pad > 0 {
-		b = append(b, paddingZeroesStr[:pad]...)
+		zeroes := [...]byte{
+			'0', '0', '0', '0', '0', '0', '0', '0', '0', '0',
+			'0', '0', '0', '0', '0', '0', '0', '0', '0', '0',
+			'0', '0', '0', '0', '0', '0', '0',
+		}
+		b = append(b, zeroes[:pad]...)
 		copy(b[pad:], b)
-		copy(b, paddingZeroesStr[:pad])
+		copy(b, zeroes[:pad])
 	}
 
 	return b
@@ -195,8 +196,9 @@ func Parse(s string) (KSUID, error) {
 	decoded := appendDecodeBase62(dst[:0], src[:])
 
 	if pad := byteLength - len(decoded); pad > 0 {
+		zeroes := [byteLength]byte{}
 		copy(dst[pad:], dst[:])
-		copy(dst[:], paddingZeroesBytes[:pad])
+		copy(dst[:], zeroes[:pad])
 	}
 
 	return FromBytes(dst[:])
