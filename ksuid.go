@@ -7,6 +7,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"sync"
 	"time"
 )
 
@@ -224,18 +225,19 @@ func New() KSUID {
 
 // Generates a new KSUID
 func NewRandom() (KSUID, error) {
-	payload := make([]byte, payloadLengthInBytes)
+	payload := payloadPool.Get().(*payload)
 
-	_, err := io.ReadFull(rander, payload)
+	_, err := io.ReadFull(rander, (*payload)[:])
 	if err != nil {
 		return Nil, err
 	}
 
-	ksuid, err := FromParts(time.Now(), payload)
+	ksuid, err := FromParts(time.Now(), (*payload)[:])
 	if err != nil {
 		return Nil, err
 	}
 
+	payloadPool.Put(payload)
 	return ksuid, nil
 }
 
@@ -282,4 +284,12 @@ func SetRand(r io.Reader) {
 // Implements comparison for KSUID type
 func Compare(a, b KSUID) int {
 	return bytes.Compare(a[:], b[:])
+}
+
+// This type and the associated memory pool are used to allocate buffers to
+// generate KSUIDs by reading the random source.
+type payload [payloadLengthInBytes]byte
+
+var payloadPool = sync.Pool{
+	New: func() interface{} { return new(payload) },
 }

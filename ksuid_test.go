@@ -239,3 +239,9 @@ func BenchmarkParse(b *testing.B) {
 		Parse(maxStringEncoded)
 	}
 }
+
+func BenchmarkNew(b *testing.B) {
+	for i := 0; i != b.N; i++ {
+		New()
+	}
+}
