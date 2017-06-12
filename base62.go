@@ -24,7 +24,8 @@ func appendBase2Base(dst []byte, src []byte, inBase int, outBase int) []byte {
 			}
 		}
 
-		// this is really a prepend or remainder to result
+		// Appends in reverse order, the byte slice gets reversed before it's
+		// returned by the function.
 		dst = append(dst, byte(remainder))
 		bs = quotient
 	}
