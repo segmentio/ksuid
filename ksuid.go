@@ -7,7 +7,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"strings"
+	"sync"
 	"time"
 )
 
@@ -45,12 +45,38 @@ var (
 	errStrSize     = fmt.Errorf("Valid encoded KSUIDs are %v characters", stringEncodedLength)
 	errPayloadSize = fmt.Errorf("Valid KSUID payloads are %v bytes", payloadLengthInBytes)
 
-	paddingZeroesStr   = strings.Repeat("0", stringEncodedLength)
-	paddingZeroesBytes = make([]byte, byteLength)
-
 	// Represents a completely empty (invalid) KSUID
 	Nil KSUID
 )
+
+// Append appends the string representation of i to b, returning a slice to a
+// potentially larger memory area.
+func (i KSUID) Append(b []byte) []byte {
+	// This is an optimization that ensures we do at most one memory allocation
+	// when the byte slice capacity is lower than the length of the string
+	// representation of the KSUID.
+	if cap(b) < stringEncodedLength {
+		c := make([]byte, len(b), len(b)+stringEncodedLength)
+		copy(c, b)
+		b = c
+	}
+
+	off := len(b)
+	b = appendEncodeBase62(b, i[:])
+
+	if pad := stringEncodedLength - (len(b) - off); pad > 0 {
+		zeroes := [...]byte{
+			'0', '0', '0', '0', '0', '0', '0', '0', '0', '0',
+			'0', '0', '0', '0', '0', '0', '0', '0', '0', '0',
+			'0', '0', '0', '0', '0', '0', '0',
+		}
+		b = append(b, zeroes[:pad]...)
+		copy(b[pad:], b)
+		copy(b, zeroes[:pad])
+	}
+
+	return b
+}
 
 // The timestamp portion of the ID as a Time object
 func (i KSUID) Time() time.Time {
@@ -70,14 +96,7 @@ func (i KSUID) Payload() []byte {
 
 // String-encoded representation that can be passed through Parse()
 func (i KSUID) String() string {
-	encoded := encodeBase62(i[:])
-
-	padAmount := stringEncodedLength - len(encoded)
-	if padAmount > 0 {
-		return paddingZeroesStr[:padAmount] + encoded
-	}
-
-	return encoded
+	return string(i.Append(make([]byte, 0, stringEncodedLength)))
 }
 
 // Raw byte representation of KSUID
@@ -171,13 +190,19 @@ func Parse(s string) (KSUID, error) {
 		return Nil, errStrSize
 	}
 
-	decoded := decodeBase62(s)
-	padAmount := byteLength - len(decoded)
-	if padAmount > 0 {
-		decoded = append(paddingZeroesBytes[:padAmount], decoded...)
+	src := [stringEncodedLength]byte{}
+	dst := [byteLength]byte{}
+
+	copy(src[:], s[:])
+	decoded := appendDecodeBase62(dst[:0], src[:])
+
+	if pad := byteLength - len(decoded); pad > 0 {
+		zeroes := [byteLength]byte{}
+		copy(dst[pad:], dst[:])
+		copy(dst[:], zeroes[:pad])
 	}
 
-	return FromBytes(decoded)
+	return FromBytes(dst[:])
 }
 
 func timeToCorrectedUTCTimestamp(t time.Time) uint32 {
@@ -200,18 +225,19 @@ func New() KSUID {
 
 // Generates a new KSUID
 func NewRandom() (KSUID, error) {
-	payload := make([]byte, payloadLengthInBytes)
+	payload := payloadPool.Get().(*payload)
 
-	_, err := io.ReadFull(rander, payload)
+	_, err := io.ReadFull(rander, (*payload)[:])
 	if err != nil {
 		return Nil, err
 	}
 
-	ksuid, err := FromParts(time.Now(), payload)
+	ksuid, err := FromParts(time.Now(), (*payload)[:])
 	if err != nil {
 		return Nil, err
 	}
 
+	payloadPool.Put(payload)
 	return ksuid, nil
 }
 
@@ -258,4 +284,12 @@ func SetRand(r io.Reader) {
 // Implements comparison for KSUID type
 func Compare(a, b KSUID) int {
 	return bytes.Compare(a[:], b[:])
+}
+
+// This type and the associated memory pool are used to allocate buffers to
+// generate KSUIDs by reading the random source.
+type payload [payloadLengthInBytes]byte
+
+var payloadPool = sync.Pool{
+	New: func() interface{} { return new(payload) },
 }
