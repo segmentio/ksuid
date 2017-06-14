@@ -228,24 +228,25 @@ func New() KSUID {
 }
 
 // Generates a new KSUID
-func NewRandom() (KSUID, error) {
-	var payload [payloadLengthInBytes]byte
-
+func NewRandom() (ksuid KSUID, err error) {
 	// Go's default random number generators are not safe for concurrent used by
 	// multiple goroutines so use of the rander and randBuffer are explicitly
 	// synchronized here.
 	randMutex.Lock()
 
-	_, err := io.ReadFull(rander, randBuffer[:])
-	copy(payload[:], randBuffer[:])
+	_, err = io.ReadAtLeast(rander, randBuffer[:], len(randBuffer))
+	copy(ksuid[timestampLengthInBytes:], randBuffer[:])
 
 	randMutex.Unlock()
 
 	if err != nil {
-		return Nil, err
+		ksuid = Nil // don't leak random bytes on error
+		return
 	}
 
-	return FromParts(time.Now(), payload[:])
+	ts := timeToCorrectedUTCTimestamp(time.Now())
+	binary.BigEndian.PutUint32(ksuid[:timestampLengthInBytes], ts)
+	return
 }
 
 // Constructs a KSUID from constituent parts
