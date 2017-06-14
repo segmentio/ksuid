@@ -171,14 +171,7 @@ func Parse(s string) (KSUID, error) {
 	dst := [byteLength]byte{}
 
 	copy(src[:], s[:])
-	decoded := fastAppendDecodeBase62(dst[:0], src[:])
-
-	if pad := byteLength - len(decoded); pad > 0 {
-		zeroes := [byteLength]byte{}
-		copy(dst[pad:], dst[:])
-		copy(dst[:], zeroes[:pad])
-	}
-
+	fastDecodeBase62(dst[:], src[:])
 	return FromBytes(dst[:])
 }
 

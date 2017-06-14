@@ -142,10 +142,10 @@ func fastDecodeBase62(dst []byte, src []byte) {
 			}
 		}
 
-		dst[n-1] = byte(remainder >> 24)
-		dst[n-2] = byte(remainder >> 16)
-		dst[n-3] = byte(remainder >> 8)
-		dst[n-4] = byte(remainder)
+		dst[n-4] = byte(remainder >> 24)
+		dst[n-3] = byte(remainder >> 16)
+		dst[n-2] = byte(remainder >> 8)
+		dst[n-1] = byte(remainder)
 		n -= 4
 		bp = quotient
 	}
