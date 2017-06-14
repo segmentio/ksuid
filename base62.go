@@ -6,6 +6,7 @@ import "strings"
 var base62Characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 
 func appendBase2Base(dst []byte, src []byte, inBase int, outBase int) []byte {
+	off := len(dst)
 	bs := src[:]
 	bq := [stringEncodedLength]byte{}
 
@@ -30,7 +31,7 @@ func appendBase2Base(dst []byte, src []byte, inBase int, outBase int) []byte {
 		bs = quotient
 	}
 
-	reverse(dst)
+	reverse(dst[off:])
 	return dst
 }
 
@@ -39,9 +40,10 @@ func base2base(src []byte, inBase int, outBase int) []byte {
 }
 
 func appendEncodeBase62(dst []byte, src []byte) []byte {
+	off := len(dst)
 	dst = appendBase2Base(dst, src, 256, 62)
-	for i, c := range dst {
-		dst[i] = base62Characters[c]
+	for i, c := range dst[off:] {
+		dst[off+i] = base62Characters[c]
 	}
 	return dst
 }

@@ -217,6 +217,18 @@ func TestSqlScanner(t *testing.T) {
 	}
 }
 
+func TestAppend(t *testing.T) {
+	k, _ := Parse("aWgEPTl1tmebfsQzFP4bxwgy80V")
+	a := make([]byte, 0, stringEncodedLength)
+
+	a = append(a, "?: "...)
+	a = k.Append(a)
+
+	if s := string(a); s != "?: aWgEPTl1tmebfsQzFP4bxwgy80V" {
+		t.Error(s)
+	}
+}
+
 func BenchmarkAppend(b *testing.B) {
 	a := make([]byte, 0, stringEncodedLength)
 	k := New()

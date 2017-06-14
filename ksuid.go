@@ -71,8 +71,8 @@ func (i KSUID) Append(b []byte) []byte {
 			'0', '0', '0', '0', '0', '0', '0',
 		}
 		b = append(b, zeroes[:pad]...)
-		copy(b[pad:], b)
-		copy(b, zeroes[:pad])
+		copy(b[off+pad:], b[off:])
+		copy(b[off:], zeroes[:pad])
 	}
 
 	return b
