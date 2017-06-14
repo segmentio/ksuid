@@ -2,11 +2,12 @@ package ksuid
 
 import (
 	"bytes"
-	"crypto/rand"
+	cryptoRand "crypto/rand"
 	"database/sql/driver"
 	"encoding/binary"
 	"fmt"
 	"io"
+	"math/rand"
 	"sync"
 	"time"
 )
@@ -39,7 +40,10 @@ const (
 type KSUID [byteLength]byte
 
 var (
-	rander = rand.Reader
+	defaultRBG = newRBG()
+	rander     = defaultRBG
+	randMutex  = sync.Mutex{}
+	randBuffer = [payloadLengthInBytes]byte{}
 
 	errSize        = fmt.Errorf("Valid KSUIDs are %v bytes", byteLength)
 	errStrSize     = fmt.Errorf("Valid encoded KSUIDs are %v characters", stringEncodedLength)
@@ -225,20 +229,23 @@ func New() KSUID {
 
 // Generates a new KSUID
 func NewRandom() (KSUID, error) {
-	payload := payloadPool.Get().(*payload)
+	var payload [payloadLengthInBytes]byte
 
-	_, err := io.ReadFull(rander, (*payload)[:])
+	// Go's default random number generators are not safe for concurrent used by
+	// multiple goroutines so use of the rander and randBuffer are explicitly
+	// synchronized here.
+	randMutex.Lock()
+
+	_, err := io.ReadFull(rander, randBuffer[:])
+	copy(payload[:], randBuffer[:])
+
+	randMutex.Unlock()
+
 	if err != nil {
 		return Nil, err
 	}
 
-	ksuid, err := FromParts(time.Now(), (*payload)[:])
-	if err != nil {
-		return Nil, err
-	}
-
-	payloadPool.Put(payload)
-	return ksuid, nil
+	return FromParts(time.Now(), payload[:])
 }
 
 // Constructs a KSUID from constituent parts
@@ -273,9 +280,13 @@ func FromBytes(b []byte) (KSUID, error) {
 // should probably only be set once globally. While this is technically
 // thread-safe as in it won't cause corruption, there's no guarantee
 // on ordering.
+//
+// Passing nil to the function tells the package to use the default source
+// of random bytes, which is a deterministic random bits generator seeded
+// from a crypto-random source.
 func SetRand(r io.Reader) {
 	if r == nil {
-		rander = rand.Reader
+		rander = defaultRBG
 		return
 	}
 	rander = r
@@ -286,10 +297,32 @@ func Compare(a, b KSUID) int {
 	return bytes.Compare(a[:], b[:])
 }
 
-// This type and the associated memory pool are used to allocate buffers to
-// generate KSUIDs by reading the random source.
-type payload [payloadLengthInBytes]byte
+func newRBG() io.Reader {
+	r, err := newRandomBitsGenerator()
+	if err != nil {
+		panic(err)
+	}
+	return r
+}
 
-var payloadPool = sync.Pool{
-	New: func() interface{} { return new(payload) },
+func newRandomBitsGenerator() (r io.Reader, err error) {
+	var seed int64
+
+	if seed, err = readCryptoRandomSeed(); err != nil {
+		return
+	}
+
+	r = rand.New(rand.NewSource(seed))
+	return
+}
+
+func readCryptoRandomSeed() (seed int64, err error) {
+	var b [8]byte
+
+	if _, err = io.ReadFull(cryptoRand.Reader, b[:]); err != nil {
+		return
+	}
+
+	seed = int64(binary.LittleEndian.Uint64(b[:]))
+	return
 }
