@@ -149,6 +149,9 @@ func fastDecodeBase62(dst []byte, src []byte) {
 		n -= 4
 		bp = quotient
 	}
+
+	var zero [20]byte
+	copy(dst[:n], zero[:])
 }
 
 // This function appends the base 62 decoded version of src into dst.
