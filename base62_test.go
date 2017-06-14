@@ -127,7 +127,9 @@ func BenchmarkAppendDecodeBase62(b *testing.B) {
 	id := []byte(New().String())
 
 	for i := 0; i != b.N; i++ {
-		appendDecodeBase62(a[:0], id)
+		b := [stringEncodedLength]byte{}
+		copy(b[:], id)
+		appendDecodeBase62(a[:0], b[:])
 	}
 }
 
