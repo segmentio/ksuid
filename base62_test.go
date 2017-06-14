@@ -77,30 +77,37 @@ func TestBase62Value(t *testing.T) {
 }
 
 func TestFastAppendEncodeBase62(t *testing.T) {
-	id, _ := Parse("aWgEPTl1tmebfsQzFP4bxwgy80V")
+	for i := 0; i != 1000; i++ {
+		id := New()
 
-	b0 := id[:]
-	b1 := appendEncodeBase62(nil, b0)
-	b2 := fastAppendEncodeBase62(nil, b0)
+		b0 := id[:]
+		b1 := appendEncodeBase62(nil, b0)
+		b2 := fastAppendEncodeBase62(nil, b0)
 
-	s1 := string(b1)
-	s2 := string(b2)
+		s1 := string(leftpad(b1, '0', stringEncodedLength))
+		s2 := string(b2)
 
-	if s1 != s2 {
-		t.Error("bad base62 representation:")
-		t.Log("<<<", s1, len(s1))
-		t.Log(">>>", s2, len(s2))
+		if s1 != s2 {
+			t.Error("bad base62 representation of", id)
+			t.Log("<<<", s1, len(s1))
+			t.Log(">>>", s2, len(s2))
+		}
 	}
 }
 
 func TestFastAppendDecodeBase62(t *testing.T) {
-	b1 := appendDecodeBase62(nil, []byte("aWgEPTl1tmebfsQzFP4bxwgy80V"))
-	b2 := fastAppendDecodeBase62(nil, []byte("aWgEPTl1tmebfsQzFP4bxwgy80V"))
+	for i := 0; i != 1000; i++ {
+		id := New()
+		b0 := leftpad(encodeBase62(id[:]), '0', stringEncodedLength)
 
-	if !bytes.Equal(b1, b2) {
-		t.Error("bad binary representation:")
-		t.Log("<<<", b1)
-		t.Log(">>>", b2)
+		b1 := appendDecodeBase62(nil, []byte(string(b0))) // because it modifies the input buffer
+		b2 := fastAppendDecodeBase62(nil, b0)
+
+		if !bytes.Equal(leftpad(b1, 0, byteLength), b2) {
+			t.Error("bad binary representation of", string(b0))
+			t.Log("<<<", b1)
+			t.Log(">>>", b2)
+		}
 	}
 }
 
@@ -220,4 +227,19 @@ func reverse(b []byte) {
 		i++
 		j--
 	}
+}
+
+func leftpad(b []byte, c byte, n int) []byte {
+	if n -= len(b); n > 0 {
+		for i := 0; i != n; i++ {
+			b = append(b, c)
+		}
+
+		copy(b[n:], b)
+
+		for i := 0; i != n; i++ {
+			b[i] = c
+		}
+	}
+	return b
 }
