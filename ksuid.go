@@ -230,7 +230,7 @@ func New() KSUID {
 // Generates a new KSUID
 func NewRandom() (ksuid KSUID, err error) {
 	// Go's default random number generators are not safe for concurrent use by
-	// multiple goroutines so use of the rander and randBuffer are explicitly
+	// multiple goroutines, the use of the rander and randBuffer are explicitly
 	// synchronized here.
 	randMutex.Lock()
 
