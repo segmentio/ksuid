@@ -313,7 +313,7 @@ func newRandomBitsGenerator() (r io.Reader, err error) {
 		return
 	}
 
-	r = rand.New(rand.NewSource(seed))
+	r = &randSourceReader{source: rand.NewSource(seed).(rand.Source64)}
 	return
 }
 
@@ -326,4 +326,15 @@ func readCryptoRandomSeed() (seed int64, err error) {
 
 	seed = int64(binary.LittleEndian.Uint64(b[:]))
 	return
+}
+
+type randSourceReader struct {
+	source rand.Source64
+}
+
+func (r *randSourceReader) Read(b []byte) (int, error) {
+	// optimized for generating 16 bytes payloads
+	binary.LittleEndian.PutUint64(b[:8], r.source.Uint64())
+	binary.LittleEndian.PutUint64(b[8:], r.source.Uint64())
+	return 16, nil
 }
