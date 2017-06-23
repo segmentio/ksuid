@@ -279,10 +279,6 @@ func FromBytes(b []byte) (KSUID, error) {
 // should probably only be set once globally. While this is technically
 // thread-safe as in it won't cause corruption, there's no guarantee
 // on ordering.
-//
-// Passing nil to the function tells the package to use the default source
-// of random bytes, which is a deterministic random bits generator seeded
-// from a crypto-random source.
 func SetRand(r io.Reader) {
 	if r == nil {
 		rander = rand.Reader
