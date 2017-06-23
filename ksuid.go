@@ -2,12 +2,11 @@ package ksuid
 
 import (
 	"bytes"
-	cryptoRand "crypto/rand"
+	"crypto/rand"
 	"database/sql/driver"
 	"encoding/binary"
 	"fmt"
 	"io"
-	"math/rand"
 	"sync"
 	"time"
 )
@@ -40,8 +39,7 @@ const (
 type KSUID [byteLength]byte
 
 var (
-	defaultRBG = newRBG()
-	rander     = defaultRBG
+	rander     = rand.Reader
 	randMutex  = sync.Mutex{}
 	randBuffer = [payloadLengthInBytes]byte{}
 
@@ -287,7 +285,7 @@ func FromBytes(b []byte) (KSUID, error) {
 // from a crypto-random source.
 func SetRand(r io.Reader) {
 	if r == nil {
-		rander = defaultRBG
+		rander = rand.Reader
 		return
 	}
 	rander = r
@@ -296,45 +294,4 @@ func SetRand(r io.Reader) {
 // Implements comparison for KSUID type
 func Compare(a, b KSUID) int {
 	return bytes.Compare(a[:], b[:])
-}
-
-func newRBG() io.Reader {
-	r, err := newRandomBitsGenerator()
-	if err != nil {
-		panic(err)
-	}
-	return r
-}
-
-func newRandomBitsGenerator() (r io.Reader, err error) {
-	var seed int64
-
-	if seed, err = readCryptoRandomSeed(); err != nil {
-		return
-	}
-
-	r = &randSourceReader{source: rand.NewSource(seed).(rand.Source64)}
-	return
-}
-
-func readCryptoRandomSeed() (seed int64, err error) {
-	var b [8]byte
-
-	if _, err = io.ReadFull(cryptoRand.Reader, b[:]); err != nil {
-		return
-	}
-
-	seed = int64(binary.LittleEndian.Uint64(b[:]))
-	return
-}
-
-type randSourceReader struct {
-	source rand.Source64
-}
-
-func (r *randSourceReader) Read(b []byte) (int, error) {
-	// optimized for generating 16 bytes payloads
-	binary.LittleEndian.PutUint64(b[:8], r.source.Uint64())
-	binary.LittleEndian.PutUint64(b[8:], r.source.Uint64())
-	return 16, nil
 }
