@@ -10,7 +10,7 @@ import (
 // FastRander is an io.Reader that uses math/rand and is optimized for
 // generating 16 bytes KSUID payloads. It is intended to be used as a
 // performance improvements for programs that have no need for
-// cryptographically secure KSUIDs and is generating a lot of them.
+// cryptographically secure KSUIDs and are generating a lot of them.
 var FastRander = newRBG()
 
 func newRBG() io.Reader {
