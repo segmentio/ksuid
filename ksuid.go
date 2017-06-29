@@ -52,30 +52,7 @@ var (
 // Append appends the string representation of i to b, returning a slice to a
 // potentially larger memory area.
 func (i KSUID) Append(b []byte) []byte {
-	// This is an optimization that ensures we do at most one memory allocation
-	// when the byte slice capacity is lower than the length of the string
-	// representation of the KSUID.
-	if cap(b) < stringEncodedLength {
-		c := make([]byte, len(b), len(b)+stringEncodedLength)
-		copy(c, b)
-		b = c
-	}
-
-	off := len(b)
-	b = appendEncodeBase62(b, i[:])
-
-	if pad := stringEncodedLength - (len(b) - off); pad > 0 {
-		zeroes := [...]byte{
-			'0', '0', '0', '0', '0', '0', '0', '0', '0', '0',
-			'0', '0', '0', '0', '0', '0', '0', '0', '0', '0',
-			'0', '0', '0', '0', '0', '0', '0',
-		}
-		b = append(b, zeroes[:pad]...)
-		copy(b[off+pad:], b[off:])
-		copy(b[off:], zeroes[:pad])
-	}
-
-	return b
+	return fastAppendEncodeBase62(b, i[:])
 }
 
 // The timestamp portion of the ID as a Time object
@@ -194,14 +171,7 @@ func Parse(s string) (KSUID, error) {
 	dst := [byteLength]byte{}
 
 	copy(src[:], s[:])
-	decoded := appendDecodeBase62(dst[:0], src[:])
-
-	if pad := byteLength - len(decoded); pad > 0 {
-		zeroes := [byteLength]byte{}
-		copy(dst[pad:], dst[:])
-		copy(dst[:], zeroes[:pad])
-	}
-
+	fastDecodeBase62(dst[:], src[:])
 	return FromBytes(dst[:])
 }
 
