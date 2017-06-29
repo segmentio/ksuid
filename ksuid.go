@@ -39,7 +39,9 @@ const (
 type KSUID [byteLength]byte
 
 var (
-	rander = rand.Reader
+	rander     = rand.Reader
+	randMutex  = sync.Mutex{}
+	randBuffer = [payloadLengthInBytes]byte{}
 
 	errSize        = fmt.Errorf("Valid KSUIDs are %v bytes", byteLength)
 	errStrSize     = fmt.Errorf("Valid encoded KSUIDs are %v characters", stringEncodedLength)
@@ -194,21 +196,25 @@ func New() KSUID {
 }
 
 // Generates a new KSUID
-func NewRandom() (KSUID, error) {
-	payload := payloadPool.Get().(*payload)
+func NewRandom() (ksuid KSUID, err error) {
+	// Go's default random number generators are not safe for concurrent use by
+	// multiple goroutines, the use of the rander and randBuffer are explicitly
+	// synchronized here.
+	randMutex.Lock()
 
-	_, err := io.ReadFull(rander, (*payload)[:])
+	_, err = io.ReadAtLeast(rander, randBuffer[:], len(randBuffer))
+	copy(ksuid[timestampLengthInBytes:], randBuffer[:])
+
+	randMutex.Unlock()
+
 	if err != nil {
-		return Nil, err
+		ksuid = Nil // don't leak random bytes on error
+		return
 	}
 
-	ksuid, err := FromParts(time.Now(), (*payload)[:])
-	if err != nil {
-		return Nil, err
-	}
-
-	payloadPool.Put(payload)
-	return ksuid, nil
+	ts := timeToCorrectedUTCTimestamp(time.Now())
+	binary.BigEndian.PutUint32(ksuid[:timestampLengthInBytes], ts)
+	return
 }
 
 // Constructs a KSUID from constituent parts
@@ -254,12 +260,4 @@ func SetRand(r io.Reader) {
 // Implements comparison for KSUID type
 func Compare(a, b KSUID) int {
 	return bytes.Compare(a[:], b[:])
-}
-
-// This type and the associated memory pool are used to allocate buffers to
-// generate KSUIDs by reading the random source.
-type payload [payloadLengthInBytes]byte
-
-var payloadPool = sync.Pool{
-	New: func() interface{} { return new(payload) },
 }
