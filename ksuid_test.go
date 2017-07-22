@@ -191,7 +191,7 @@ func TestSqlValuerNilValue(t *testing.T) {
 	if v, err := Nil.Value(); err != nil {
 		t.Error(err)
 	} else if v != nil {
-		t.Error("bad nil value")
+		t.Errorf("bad nil value: %v", v)
 	}
 }
 
