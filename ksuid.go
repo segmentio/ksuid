@@ -197,6 +197,10 @@ func New() KSUID {
 
 // Generates a new KSUID
 func NewRandom() (ksuid KSUID, err error) {
+	return NewRandomWithTime(time.Now())
+}
+
+func NewRandomWithTime(t time.Time) (ksuid KSUID, err error) {
 	// Go's default random number generators are not safe for concurrent use by
 	// multiple goroutines, the use of the rander and randBuffer are explicitly
 	// synchronized here.
@@ -212,7 +216,7 @@ func NewRandom() (ksuid KSUID, err error) {
 		return
 	}
 
-	ts := timeToCorrectedUTCTimestamp(time.Now())
+	ts := timeToCorrectedUTCTimestamp(t)
 	binary.BigEndian.PutUint32(ksuid[:timestampLengthInBytes], ts)
 	return
 }
