@@ -187,6 +187,14 @@ func TestSqlValuer(t *testing.T) {
 	}
 }
 
+func TestSqlValuerNilValue(t *testing.T) {
+	if v, err := Nil.Value(); err != nil {
+		t.Error(err)
+	} else if v != nil {
+		t.Errorf("bad nil value: %v", v)
+	}
+}
+
 func TestSqlScanner(t *testing.T) {
 	id1 := New()
 	id2 := New()

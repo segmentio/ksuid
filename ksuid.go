@@ -130,6 +130,9 @@ func (i *KSUID) UnmarshalBinary(b []byte) error {
 // Value converts the KSUID into a SQL driver value which can be used to
 // directly use the KSUID as parameter to a SQL query.
 func (i KSUID) Value() (driver.Value, error) {
+	if i.IsNil() {
+		return nil, nil
+	}
 	return i.String(), nil
 }
 
