@@ -18,6 +18,7 @@ import (
 //	}
 //	id, err := seq.Next()
 //
+// Sequence values are not safe to use concurrently from multiple goroutines.
 type Sequence struct {
 	// The seed is used as base for the KSUID generator, all generated KSUIDs
 	// share the same leading 18 bytes of the seed.

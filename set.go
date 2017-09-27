@@ -196,6 +196,8 @@ const (
 //		// ...
 //	}
 //
+// CompressedSetIter values are not safe to use concurrently from multiple
+// goroutines.
 type CompressedSetIter struct {
 	// KSUID is modified by calls to the Next method to hold the KSUID loaded
 	// by the iterator.
