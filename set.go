@@ -251,7 +251,10 @@ func (it *CompressedSetIter) Next() bool {
 		off2 := off1 + payloadLengthInBytes
 
 		it.timestamp += varint32(it.content[off0:off1])
-		it.KSUID = it.makeFromPayload(it.content[off1:off2])
+
+		binary.BigEndian.PutUint32(it.KSUID[:timestampLengthInBytes], it.timestamp)
+		copy(it.KSUID[timestampLengthInBytes:], it.content[off1:off2])
+
 		it.offset = off2
 		it.lastValue = makeUint128FromPayload(it.content[off1:off2])
 
@@ -262,7 +265,7 @@ func (it *CompressedSetIter) Next() bool {
 		delta := varint128(it.content[off0:off1])
 		value := add128(it.lastValue, delta)
 
-		it.KSUID = it.makeFromUint128(value)
+		it.KSUID = value.ksuid(it.timestamp)
 		it.offset = off1
 		it.lastValue = value
 
@@ -285,15 +288,4 @@ func (it *CompressedSetIter) Next() bool {
 	}
 
 	return true
-}
-
-func (it *CompressedSetIter) makeFromPayload(payload []byte) (id KSUID) {
-	binary.BigEndian.PutUint32(id[:timestampLengthInBytes], it.timestamp)
-	copy(id[timestampLengthInBytes:], payload)
-	return
-}
-
-func (it *CompressedSetIter) makeFromUint128(value uint128) KSUID {
-	payload := value.bytes()
-	return it.makeFromPayload(payload[:])
 }
