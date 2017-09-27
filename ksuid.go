@@ -7,6 +7,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"sort"
 	"sync"
 	"time"
 )
@@ -268,3 +269,14 @@ func SetRand(r io.Reader) {
 func Compare(a, b KSUID) int {
 	return bytes.Compare(a[:], b[:])
 }
+
+// Sorts the given slice of KSUIDs
+func Sort(ids []KSUID) {
+	sort.Sort(byCompare(ids))
+}
+
+type byCompare []KSUID
+
+func (ids byCompare) Len() int           { return len(ids) }
+func (ids byCompare) Less(i, j int) bool { return Compare(ids[i], ids[j]) < 0 }
+func (ids byCompare) Swap(i, j int)      { ids[i], ids[j] = ids[j], ids[i] }

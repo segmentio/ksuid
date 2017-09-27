@@ -262,6 +262,15 @@ func BenchmarkParse(b *testing.B) {
 	}
 }
 
+func BenchmarkCompare(b *testing.B) {
+	k1 := New()
+	k2 := New()
+
+	for i := 0; i != b.N; i++ {
+		Compare(k1, k2)
+	}
+}
+
 func BenchmarkNew(b *testing.B) {
 	b.Run("with crypto rand", func(b *testing.B) {
 		SetRand(nil)
