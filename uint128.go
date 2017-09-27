@@ -1,12 +1,28 @@
 package ksuid
 
-import "fmt"
+import (
+	"encoding/binary"
+	"fmt"
+)
 
 // uint128 represents an unsigned 128 bits little endian integer.
 type uint128 [2]uint64
 
 func makeUint128(high uint64, low uint64) uint128 {
 	return uint128{low, high}
+}
+
+func makeUint128FromPayload(payload []byte) uint128 {
+	return makeUint128(
+		binary.BigEndian.Uint64(payload[:8]),
+		binary.BigEndian.Uint64(payload[8:]),
+	)
+}
+
+func (v uint128) bytes() (b [16]byte) {
+	binary.BigEndian.PutUint64(b[:8], v[1])
+	binary.BigEndian.PutUint64(b[8:], v[0])
+	return
 }
 
 func (v uint128) String() string {

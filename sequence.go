@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"math"
-	"sync/atomic"
 )
 
 // Sequence is a KSUID generator which produces a sequence of ordered KSUIDs
@@ -30,10 +29,11 @@ type Sequence struct {
 // sequence has been exhausted.
 func (seq *Sequence) Next() (KSUID, error) {
 	id := seq.Seed // copy
-	count := atomic.AddUint32(&seq.count, 1) - 1
+	count := seq.count
 	if count > math.MaxUint16 {
 		return Nil, errors.New("too many IDs were generated")
 	}
+	seq.count++
 	binary.BigEndian.PutUint16(id[len(id)-2:], uint16(count))
 	return id, nil
 }
