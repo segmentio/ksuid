@@ -93,7 +93,7 @@ func testCompressedSetMixed(t *testing.T) {
 		times[i] = now.Add(time.Duration(i) * 2 * time.Second)
 	}
 
-	sequences := [20]Sequence{}
+	sequences := [200]Sequence{}
 	for i := range sequences {
 		seed, _ := NewRandomWithTime(times[i%len(times)])
 		sequences[i] = Sequence{Seed: seed}
