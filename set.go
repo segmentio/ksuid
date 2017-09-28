@@ -15,7 +15,7 @@ func (set CompressedSet) Iter() CompressedSetIter {
 // Compress creates and returns a compressed set of KSUIDs from the list given
 // as arguments.
 func Compress(ids ...KSUID) CompressedSet {
-	c := byteLength + (len(ids) / 5)
+	c := 1 + byteLength + (len(ids) / 5)
 	b := make([]byte, 0, c)
 	return AppendCompressed(b, ids...)
 }
@@ -36,11 +36,12 @@ func AppendCompressed(set []byte, ids ...KSUID) CompressedSet {
 
 		// The first KSUID is always written to the set, this is the starting
 		// point for all deltas.
+		set = append(set, byte(rawKSUID))
 		set = append(set, ids[0][:]...)
 
 		timestamp := ids[0].Timestamp()
 		lastKSUID := ids[0]
-		lastValue := makeUint128FromPayload(ids[0][timestampLengthInBytes:])
+		lastValue := uint128Payload(ids[0])
 
 		for i := 1; i != len(ids); i++ {
 			id := ids[i]
@@ -50,8 +51,7 @@ func AppendCompressed(set []byte, ids ...KSUID) CompressedSet {
 			}
 
 			t := id.Timestamp()
-			p := id[timestampLengthInBytes:]
-			v := makeUint128FromPayload(p)
+			v := uint128Payload(id)
 
 			if t != timestamp {
 				d := t - timestamp
@@ -59,7 +59,7 @@ func AppendCompressed(set []byte, ids ...KSUID) CompressedSet {
 
 				set = append(set, timeDelta|byte(n))
 				set = appendVarint32(set, d, n)
-				set = append(set, p...)
+				set = append(set, id[timestampLengthInBytes:]...)
 
 				timestamp = t
 			} else {
@@ -71,14 +71,16 @@ func AppendCompressed(set []byte, ids ...KSUID) CompressedSet {
 					set = append(set, payloadDelta|byte(n))
 					set = appendVarint128(set, d, n)
 				} else {
-					l := rangeLength(ids[i:], t, v)
+					l, c := rangeLength(ids[i+1:], t, id, v)
 					m := uint64(l + 1)
 					n := varintLength64(m)
 
 					set = append(set, payloadRange|byte(n))
 					set = appendVarint64(set, m, n)
 
-					i += l
+					i += c
+					id = ids[i]
+					v = uint128Payload(id)
 				}
 			}
 
@@ -89,25 +91,35 @@ func AppendCompressed(set []byte, ids ...KSUID) CompressedSet {
 	return CompressedSet(set)
 }
 
-func rangeLength(ids []KSUID, timestamp uint32, lastValue uint128) int {
+func rangeLength(ids []KSUID, timestamp uint32, lastKSUID KSUID, lastValue uint128) (length int, count int) {
 	one := makeUint128(0, 1)
 
 	for i := range ids {
-		if ids[i].Timestamp() != timestamp {
-			return i
+		id := ids[i]
+
+		if id == lastKSUID {
+			continue
 		}
 
-		p := ids[i][timestampLengthInBytes:]
-		v := makeUint128FromPayload(p)
-
-		if v != one {
-			return i
+		if id.Timestamp() != timestamp {
+			count = i
+			return
 		}
 
+		v := uint128Payload(id)
+
+		if sub128(v, lastValue) != one {
+			count = i
+			return
+		}
+
+		lastKSUID = id
 		lastValue = v
+		length++
 	}
 
-	return len(ids)
+	count = len(ids)
+	return
 }
 
 func appendVarint128(b []byte, v uint128, n int) []byte {
@@ -183,6 +195,7 @@ func varintLength32(v uint32) int {
 }
 
 const (
+	rawKSUID     = 0
 	timeDelta    = (1 << 6)
 	payloadDelta = (1 << 7)
 	payloadRange = (1 << 6) | (1 << 7)
@@ -222,14 +235,6 @@ func (it *CompressedSetIter) Next() bool {
 		return false
 	}
 
-	if it.offset == 0 {
-		copy(it.KSUID[:], it.content[:byteLength])
-		it.offset += byteLength
-		it.timestamp = it.KSUID.Timestamp()
-		it.lastValue = makeUint128FromPayload(it.KSUID[timestampLengthInBytes:])
-		return true
-	}
-
 	if it.seqlength != 0 {
 		var err error
 		it.KSUID, err = it.sequence.Next()
@@ -249,6 +254,16 @@ func (it *CompressedSetIter) Next() bool {
 	cnt := int(b) & ^mask
 
 	switch tag {
+	case rawKSUID:
+		off0 := it.offset
+		off1 := off0 + byteLength
+
+		copy(it.KSUID[:], it.content[off0:off1])
+
+		it.timestamp = it.KSUID.Timestamp()
+		it.lastValue = makeUint128FromPayload(it.KSUID[timestampLengthInBytes:])
+		it.offset = off1
+
 	case timeDelta:
 		off0 := it.offset
 		off1 := off0 + cnt

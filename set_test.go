@@ -139,19 +139,26 @@ func BenchmarkCompressedSet(b *testing.B) {
 	set := Compress(ksuids2[:]...)
 
 	b.Run("write", func(b *testing.B) {
+		n := 0
 		for i := 0; i != b.N; i++ {
 			ksuids2 = ksuids1
 			buf = AppendCompressed(buf[:0], ksuids2[:]...)
+			n = len(buf)
 		}
+		b.SetBytes(int64(n + len(ksuids2)))
 	})
 
 	b.Run("read", func(b *testing.B) {
+		n := 0
 		for i := 0; i != b.N; i++ {
+			n = 0
 			for it := set.Iter(); true; {
 				if !it.Next() {
+					n++
 					break
 				}
 			}
 		}
+		b.SetBytes(int64((n * byteLength) + len(set)))
 	})
 }

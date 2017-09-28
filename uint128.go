@@ -5,6 +5,10 @@ import "fmt"
 // uint128 represents an unsigned 128 bits little endian integer.
 type uint128 [2]uint64
 
+func uint128Payload(ksuid KSUID) uint128 {
+	return makeUint128FromPayload(ksuid[timestampLengthInBytes:])
+}
+
 func makeUint128(high uint64, low uint64) uint128 {
 	return uint128{low, high}
 }
