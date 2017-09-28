@@ -23,7 +23,7 @@ type Sequence struct {
 	// The seed is used as base for the KSUID generator, all generated KSUIDs
 	// share the same leading 18 bytes of the seed.
 	Seed  KSUID
-	count uint32 // uint32 for overlow, only 2 bytes are used
+	count uint32 // uint32 for overflow, only 2 bytes are used
 }
 
 // Next produces the next KSUID in the sequence, or returns an error if the
