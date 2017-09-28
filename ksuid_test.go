@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -239,6 +240,32 @@ func TestAppend(t *testing.T) {
 	}
 }
 
+func TestSort(t *testing.T) {
+	ids1 := [11]KSUID{}
+	ids2 := [11]KSUID{}
+
+	for i := range ids1 {
+		ids1[i] = New()
+	}
+
+	ids2 = ids1
+	sort.Slice(ids2[:], func(i, j int) bool {
+		return Compare(ids2[i], ids2[j]) < 0
+	})
+
+	Sort(ids1[:])
+
+	if !IsSorted(ids1[:]) {
+		t.Error("not sorted")
+	}
+
+	if ids1 != ids2 {
+		t.Error("bad order:")
+		t.Log(ids1)
+		t.Log(ids2)
+	}
+}
+
 func BenchmarkAppend(b *testing.B) {
 	a := make([]byte, 0, stringEncodedLength)
 	k := New()
@@ -268,6 +295,20 @@ func BenchmarkCompare(b *testing.B) {
 
 	for i := 0; i != b.N; i++ {
 		Compare(k1, k2)
+	}
+}
+
+func BenchmarkSort(b *testing.B) {
+	ids1 := [101]KSUID{}
+	ids2 := [101]KSUID{}
+
+	for i := range ids1 {
+		ids1[i] = New()
+	}
+
+	for i := 0; i != b.N; i++ {
+		ids2 = ids1
+		Sort(ids2[:])
 	}
 }
 

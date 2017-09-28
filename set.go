@@ -29,7 +29,9 @@ func Compress(ids ...KSUID) CompressedSet {
 // to waste.
 func AppendCompressed(set []byte, ids ...KSUID) CompressedSet {
 	if len(ids) != 0 {
-		Sort(ids) // TODO: this is the only dynamic memory allocation :'(
+		if !IsSorted(ids) {
+			Sort(ids)
+		}
 		one := makeUint128(0, 1)
 
 		// The first KSUID is always written to the set, this is the starting
