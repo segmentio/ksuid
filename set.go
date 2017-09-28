@@ -242,7 +242,7 @@ func (it *CompressedSetIter) Next() bool {
 			panic(err)
 		}
 		it.seqlength--
-		it.lastValue = makeUint128FromPayload(it.KSUID[timestampLengthInBytes:])
+		it.lastValue = uint128Payload(it.KSUID)
 		return true
 	}
 
@@ -260,9 +260,9 @@ func (it *CompressedSetIter) Next() bool {
 
 		copy(it.KSUID[:], it.content[off0:off1])
 
-		it.timestamp = it.KSUID.Timestamp()
-		it.lastValue = makeUint128FromPayload(it.KSUID[timestampLengthInBytes:])
 		it.offset = off1
+		it.timestamp = it.KSUID.Timestamp()
+		it.lastValue = uint128Payload(it.KSUID)
 
 	case timeDelta:
 		off0 := it.offset
@@ -275,7 +275,7 @@ func (it *CompressedSetIter) Next() bool {
 		copy(it.KSUID[timestampLengthInBytes:], it.content[off1:off2])
 
 		it.offset = off2
-		it.lastValue = makeUint128FromPayload(it.content[off1:off2])
+		it.lastValue = uint128Payload(it.KSUID)
 
 	case payloadDelta:
 		off0 := it.offset
@@ -300,7 +300,7 @@ func (it *CompressedSetIter) Next() bool {
 		// 2^16 IDs can be generated, the first one will not fail.
 		it.KSUID, _ = it.sequence.Next()
 		it.seqlength--
-		it.lastValue = makeUint128FromPayload(it.KSUID[timestampLengthInBytes:])
+		it.lastValue = uint128Payload(it.KSUID)
 
 	default:
 		panic("KSUID set iterator is reading malformed data")
