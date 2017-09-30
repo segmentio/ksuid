@@ -11,8 +11,12 @@ func TestCompressedSet(t *testing.T) {
 		function func(*testing.T)
 	}{
 		{
-			scenario: "string",
+			scenario: "String",
 			function: testCompressedSetString,
+		},
+		{
+			scenario: "GoString",
+			function: testCompressedSetGoString,
 		},
 		{
 			scenario: "sparse",
@@ -57,6 +61,18 @@ func testCompressedSetString(t *testing.T) {
 	set := Compress(id1, id2, id3)
 
 	if s := set.String(); s != `["0uHjRkQoL2JKAQIULPdqqb5fOkk", "0uHjRvkOG5CbtoXW5oCEp3L2xBu", "0uHjSJ4Pe5606kT2XWixK6dirlo"]` {
+		t.Error(s)
+	}
+}
+
+func testCompressedSetGoString(t *testing.T) {
+	id1, _ := Parse("0uHjRkQoL2JKAQIULPdqqb5fOkk")
+	id2, _ := Parse("0uHjRvkOG5CbtoXW5oCEp3L2xBu")
+	id3, _ := Parse("0uHjSJ4Pe5606kT2XWixK6dirlo")
+
+	set := Compress(id1, id2, id3)
+
+	if s := set.GoString(); s != `ksuid.CompressedSet{"0uHjRkQoL2JKAQIULPdqqb5fOkk", "0uHjRvkOG5CbtoXW5oCEp3L2xBu", "0uHjSJ4Pe5606kT2XWixK6dirlo"}` {
 		t.Error(s)
 	}
 }

@@ -18,23 +18,35 @@ func (set CompressedSet) Iter() CompressedSetIter {
 // String satisfies the fmt.Stringer interface, returns a human-readable string
 // representation of the set.
 func (set CompressedSet) String() string {
-	a := [27]byte{}
 	b := bytes.Buffer{}
 	b.WriteByte('[')
+	set.writeTo(&b)
+	b.WriteByte(']')
+	return b.String()
+}
+
+// String satisfies the fmt.GoStringer interface, returns a Go representation of
+// the set.
+func (set CompressedSet) GoString() string {
+	b := bytes.Buffer{}
+	b.WriteString("ksuid.CompressedSet{")
+	set.writeTo(&b)
+	b.WriteByte('}')
+	return b.String()
+}
+
+func (set CompressedSet) writeTo(b *bytes.Buffer) {
+	a := [27]byte{}
 
 	for i, it := 0, set.Iter(); it.Next(); i++ {
 		if i != 0 {
-			b.WriteByte(',')
-			b.WriteByte(' ')
+			b.WriteString(", ")
 		}
 		b.WriteByte('"')
 		it.KSUID.Append(a[:0])
 		b.Write(a[:])
 		b.WriteByte('"')
 	}
-
-	b.WriteByte(']')
-	return b.String()
 }
 
 // Compress creates and returns a compressed set of KSUIDs from the list given
