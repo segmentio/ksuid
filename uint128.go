@@ -130,3 +130,7 @@ func sub128(x, y uint128) (z uint128) {
 	}
 	return
 }
+
+func incr128(x uint128) uint128 {
+	return add128(x, uint128{1, 0})
+}

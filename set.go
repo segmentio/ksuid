@@ -225,9 +225,7 @@ type CompressedSetIter struct {
 	content []byte
 	offset  int
 
-	sequence  Sequence
 	seqlength uint64
-
 	timestamp uint32
 	lastValue uint128
 }
@@ -240,13 +238,10 @@ func (it *CompressedSetIter) Next() bool {
 	}
 
 	if it.seqlength != 0 {
-		var err error
-		it.KSUID, err = it.sequence.Next()
-		if err != nil {
-			panic(err)
-		}
+		value := incr128(it.lastValue)
+		it.KSUID = value.ksuid(it.timestamp)
 		it.seqlength--
-		it.lastValue = uint128Payload(it.KSUID)
+		it.lastValue = value
 		return true
 	}
 
@@ -296,15 +291,12 @@ func (it *CompressedSetIter) Next() bool {
 		off0 := it.offset
 		off1 := off0 + cnt
 
-		it.sequence.Seed = it.KSUID
-		it.sequence.count = uint32(binary.BigEndian.Uint16(it.KSUID[byteLength-2:])) + 1
+		value := incr128(it.lastValue)
+		it.KSUID = value.ksuid(it.timestamp)
 		it.seqlength = varint64(it.content[off0:off1])
 		it.offset = off1
-
-		// 2^16 IDs can be generated, the first one will not fail.
-		it.KSUID, _ = it.sequence.Next()
 		it.seqlength--
-		it.lastValue = uint128Payload(it.KSUID)
+		it.lastValue = value
 
 	default:
 		panic("KSUID set iterator is reading malformed data")
