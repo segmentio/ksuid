@@ -174,8 +174,12 @@ func varintLength64(v uint64) int {
 		return 3
 	case (v & 0xFFFFFFFF00000000) == 0:
 		return 4
+	case (v & 0xFFFFFF0000000000) == 0:
+		return 5
 	case (v & 0xFFFF000000000000) == 0:
 		return 6
+	case (v & 0xFF00000000000000) == 0:
+		return 7
 	default:
 		return 8
 	}
@@ -249,7 +253,7 @@ func (it *CompressedSetIter) Next() bool {
 	b := it.content[it.offset]
 	it.offset++
 
-	const mask = timeDelta | payloadDelta | payloadRange
+	const mask = rawKSUID | timeDelta | payloadDelta | payloadRange
 	tag := int(b) & mask
 	cnt := int(b) & ^mask
 

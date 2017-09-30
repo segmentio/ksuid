@@ -22,6 +22,22 @@ func TestCompressedSet(t *testing.T) {
 			scenario: "mixed",
 			function: testCompressedSetMixed,
 		},
+		{
+			scenario: "iterating over a nil compressed set returns no ids",
+			function: testCompressedSetNil,
+		},
+		{
+			scenario: "concatenating multiple compressed sets is supported",
+			function: testCompressedSetConcat,
+		},
+		{
+			scenario: "duplicate ids are appear only once in the compressed set",
+			function: testCompressedSetDuplicates,
+		},
+		{
+			scenario: "building a compressed set with a single id repeated multiple times produces the id only once",
+			function: testCompressedSetSingle,
+		},
 	}
 
 	for _, test := range tests {
@@ -118,6 +134,98 @@ func testCompressedSetMixed(t *testing.T) {
 	}
 
 	reportCompressionRatio(t, ksuids[:], set)
+}
+
+func testCompressedSetDuplicates(t *testing.T) {
+	sequence := Sequence{Seed: New()}
+
+	ksuids := [1000]KSUID{}
+	for i := range ksuids[:10] {
+		ksuids[i], _ = sequence.Next() // exercise dedupe on the id range code path
+	}
+	for i := range ksuids[10:] {
+		ksuids[i+10] = New()
+	}
+	for i := 1; i < len(ksuids); i += 4 {
+		ksuids[i] = ksuids[i-1] // generate many dupes
+	}
+
+	miss := make(map[KSUID]struct{})
+	uniq := make(map[KSUID]struct{})
+
+	for _, id := range ksuids {
+		miss[id] = struct{}{}
+	}
+
+	set := Compress(ksuids[:]...)
+
+	for it := set.Iter(); it.Next(); {
+		if _, dupe := uniq[it.KSUID]; dupe {
+			t.Errorf("duplicate id found in compressed set: %s", it.KSUID)
+		}
+		uniq[it.KSUID] = struct{}{}
+		delete(miss, it.KSUID)
+	}
+
+	if len(miss) != 0 {
+		t.Error("some ids were not found in the compressed set:")
+		for id := range miss {
+			t.Log(id)
+		}
+	}
+}
+
+func testCompressedSetSingle(t *testing.T) {
+	id := New()
+
+	set := Compress(
+		id, id, id, id, id, id, id, id, id, id,
+		id, id, id, id, id, id, id, id, id, id,
+		id, id, id, id, id, id, id, id, id, id,
+		id, id, id, id, id, id, id, id, id, id,
+	)
+
+	n := 0
+
+	for it := set.Iter(); it.Next(); {
+		if n != 0 {
+			t.Errorf("too many ids found in the compressed set: %s", it.KSUID)
+		} else if id != it.KSUID {
+			t.Errorf("invalid id found in the compressed set: %s != %s", it.KSUID, id)
+		}
+		n++
+	}
+
+	if n == 0 {
+		t.Error("no ids were produced by the compressed set")
+	}
+}
+
+func testCompressedSetNil(t *testing.T) {
+	set := CompressedSet(nil)
+
+	for it := set.Iter(); it.Next(); {
+		t.Error("too many ids returned by the iterator of a nil compressed set: %s", it.KSUID)
+	}
+}
+
+func testCompressedSetConcat(t *testing.T) {
+	ksuids := [100]KSUID{}
+
+	for i := range ksuids {
+		ksuids[i] = New()
+	}
+
+	set := CompressedSet(nil)
+	set = AppendCompressed(set, ksuids[:42]...)
+	set = AppendCompressed(set, ksuids[42:64]...)
+	set = AppendCompressed(set, ksuids[64:]...)
+
+	for i, it := 0, set.Iter(); it.Next(); i++ {
+		if ksuids[i] != it.KSUID {
+			t.Errorf("invalid ID at index %d: %s != %s", i, ksuids[i], it.KSUID)
+		}
+	}
 }
 
 func reportCompressionRatio(t *testing.T, ksuids []KSUID, set CompressedSet) {
