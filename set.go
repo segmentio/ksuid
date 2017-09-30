@@ -1,6 +1,9 @@
 package ksuid
 
-import "encoding/binary"
+import (
+	"bytes"
+	"encoding/binary"
+)
 
 // CompressedSet is an immutable data type which stores a set of KSUIDs.
 type CompressedSet []byte
@@ -10,6 +13,28 @@ func (set CompressedSet) Iter() CompressedSetIter {
 	return CompressedSetIter{
 		content: []byte(set),
 	}
+}
+
+// String satisfies the fmt.Stringer interface, returns a human-readable string
+// representation of the set.
+func (set CompressedSet) String() string {
+	a := [27]byte{}
+	b := bytes.Buffer{}
+	b.WriteByte('[')
+
+	for i, it := 0, set.Iter(); it.Next(); i++ {
+		if i != 0 {
+			b.WriteByte(',')
+			b.WriteByte(' ')
+		}
+		b.WriteByte('"')
+		it.KSUID.Append(a[:0])
+		b.Write(a[:])
+		b.WriteByte('"')
+	}
+
+	b.WriteByte(']')
+	return b.String()
 }
 
 // Compress creates and returns a compressed set of KSUIDs from the list given
