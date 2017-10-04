@@ -268,3 +268,44 @@ func SetRand(r io.Reader) {
 func Compare(a, b KSUID) int {
 	return bytes.Compare(a[:], b[:])
 }
+
+// Sorts the given slice of KSUIDs
+func Sort(ids []KSUID) {
+	quickSort(ids, 0, len(ids)-1)
+}
+
+// Checks whether a slice of KSUIDs is sorted
+func IsSorted(ids []KSUID) bool {
+	if len(ids) != 0 {
+		min := ids[0]
+		for _, id := range ids[1:] {
+			if bytes.Compare(min[:], id[:]) > 0 {
+				return false
+			}
+			min = id
+		}
+	}
+	return true
+}
+
+func quickSort(a []KSUID, lo int, hi int) {
+	if lo < hi {
+		pivot := a[hi]
+		i := lo - 1
+
+		for j, n := lo, hi; j != n; j++ {
+			if bytes.Compare(a[j][:], pivot[:]) < 0 {
+				i++
+				a[i], a[j] = a[j], a[i]
+			}
+		}
+
+		i++
+		if bytes.Compare(a[hi][:], a[i][:]) < 0 {
+			a[i], a[hi] = a[hi], a[i]
+		}
+
+		quickSort(a, lo, i-1)
+		quickSort(a, i+1, hi)
+	}
+}
