@@ -49,6 +49,8 @@ var (
 
 	// Represents a completely empty (invalid) KSUID
 	Nil KSUID
+	// Represents the highest value a KSUID can have
+	Max = KSUID{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}
 )
 
 // Append appends the string representation of i to b, returning a slice to a
