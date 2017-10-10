@@ -23,7 +23,7 @@ var (
 
 func init() {
 	flag.IntVar(&count, "n", 1, "Number of KSUIDs to generate when called with no other arguments.")
-	flag.StringVar(&format, "f", "inspect", "One of inspect, time, timestamp, payload, raw, or template.")
+	flag.StringVar(&format, "f", "string", "One of string, inspect, time, timestamp, payload, raw, or template.")
 	flag.StringVar(&tpltxt, "t", "", "The Go template used to format the output.")
 	flag.BoolVar(&verbose, "v", false, "Turn on verbose mode.")
 }
@@ -34,6 +34,8 @@ func main() {
 
 	var print func(ksuid.KSUID)
 	switch format {
+	case "string":
+		print = printString
 	case "inspect":
 		print = printInspect
 	case "time":
@@ -53,9 +55,8 @@ func main() {
 
 	if len(args) == 0 {
 		for i := 0; i < count; i++ {
-			fmt.Println(ksuid.New())
+			args = append(args, ksuid.New().String())
 		}
-		os.Exit(0)
 	}
 
 	var ids []ksuid.KSUID
@@ -75,6 +76,10 @@ func main() {
 		}
 		print(id)
 	}
+}
+
+func printString(id ksuid.KSUID) {
+	fmt.Println(id.String())
 }
 
 func printInspect(id ksuid.KSUID) {
