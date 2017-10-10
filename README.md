@@ -61,3 +61,44 @@ encoding that also sorts lexicographically.
 This package comes with a simple command-line tool `ksuid`. This tool can
 generate KSUIDs as well as inspect the internal components for debugging
 purposes.
+
+## Usage examples
+
+### Generate 4 KSUID
+
+```sh
+$ ./ksuid -n 4
+0ujsszwN8NRY24YaXiTIE2VWDTS
+0ujsswThIGTUYm2K8FjOOfXtY1K
+0ujssxh0cECutqzMgbtXSGnjorm
+0ujsszgFvbiEr7CDgE3z8MAUPFt
+```
+
+### Inspect the components of a KSUID
+
+Using the inspect formatting on just 1 ksuid:
+
+```sh
+$ ./ksuid -f inspect $(./ksuid)
+
+REPRESENTATION:
+
+  String: 0ujtsYcgvSTl8PAuAdqWYSMnLOv
+     Raw: 0669F7EFB5A1CD34B5F99D1154FB6853345C9735
+
+COMPONENTS:
+
+       Time: 2017-10-09 21:00:47 -0700 PDT
+  Timestamp: 107608047
+    Payload: B5A1CD34B5F99D1154FB6853345C9735
+```
+
+Using the template formatting on 4 ksuid:
+
+```sh
+$ ./ksuid -f template -t '{{ .Time }}: {{ .Payload }}' $(./ksuid -n 4)
+2017-10-09 21:05:37 -0700 PDT: 304102BC687E087CC3A811F21D113CCF
+2017-10-09 21:05:37 -0700 PDT: EAF0B240A9BFA55E079D887120D962F0
+2017-10-09 21:05:37 -0700 PDT: DF0761769909ABB0C7BB9D66F79FC041
+2017-10-09 21:05:37 -0700 PDT: 1A8F0E3D0BDEB84A5FAD702876F46543
+```
