@@ -266,6 +266,46 @@ func TestSort(t *testing.T) {
 	}
 }
 
+func TestNext(t *testing.T) {
+	id0 := Nil
+	id1 := KSUID{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}
+	id2 := id0.Next()
+
+	if id1 != id2 {
+		t.Error("next id of the nil KSUID is wrong:", id1, "!=", id2)
+	}
+
+	id0 = Max
+	id1 = Nil
+	id2 = id0.Next()
+
+	if id1 != id2 {
+		t.Error("next id of the max KSUID is wrong:", id1, "!=", id2)
+	}
+}
+
+func TestPrev(t *testing.T) {
+	id0 := Nil
+	id1 := Max
+	id2 := id0.Prev()
+
+	if id1 != id2 {
+		t.Error("previous id of the nil KSUID is wrong:", id1, "!=", id2)
+	}
+
+	id0 = Max
+	id1 = KSUID{
+		0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe,
+	}
+	id2 = id0.Prev()
+
+	if id1 != id2 {
+		t.Error("previous id of the max KSUID is wrong:", id1, "!=", id2)
+	}
+
+}
+
 func BenchmarkAppend(b *testing.B) {
 	a := make([]byte, 0, stringEncodedLength)
 	k := New()
