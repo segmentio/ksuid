@@ -270,16 +270,16 @@ type CompressedSetIter struct {
 // Next moves the iterator forward, returning true if there a KSUID was found,
 // or false if the iterator as reached the end of the set it was created from.
 func (it *CompressedSetIter) Next() bool {
-	if it.offset == len(it.content) {
-		return false
-	}
-
 	if it.seqlength != 0 {
 		value := incr128(it.lastValue)
 		it.KSUID = value.ksuid(it.timestamp)
 		it.seqlength--
 		it.lastValue = value
 		return true
+	}
+
+	if it.offset == len(it.content) {
+		return false
 	}
 
 	b := it.content[it.offset]
