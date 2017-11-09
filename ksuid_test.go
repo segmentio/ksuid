@@ -266,44 +266,42 @@ func TestSort(t *testing.T) {
 	}
 }
 
-func TestNext(t *testing.T) {
-	id0 := Nil
-	id1 := KSUID{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}
-	id2 := id0.Next()
-
-	if id1 != id2 {
-		t.Error("next id of the nil KSUID is wrong:", id1, "!=", id2)
+func TestPrevNext(t *testing.T) {
+	tests := []struct {
+		id   KSUID
+		prev KSUID
+		next KSUID
+	}{
+		{
+			id:   Nil,
+			prev: Max,
+			next: KSUID{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+		},
+		{
+			id:   Max,
+			prev: KSUID{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe},
+			next: Nil,
+		},
 	}
 
-	id0 = Max
-	id1 = Nil
-	id2 = id0.Next()
-
-	if id1 != id2 {
-		t.Error("next id of the max KSUID is wrong:", id1, "!=", id2)
+	for _, test := range tests {
+		t.Run(test.id.String(), func(t *testing.T) {
+			testPrevNext(t, test.id, test.prev, test.next)
+		})
 	}
 }
 
-func TestPrev(t *testing.T) {
-	id0 := Nil
-	id1 := Max
-	id2 := id0.Prev()
+func testPrevNext(t *testing.T, id, prev, next KSUID) {
+	id1 := id.Prev()
+	id2 := id.Next()
 
-	if id1 != id2 {
-		t.Error("previous id of the nil KSUID is wrong:", id1, "!=", id2)
+	if id1 != prev {
+		t.Error("previous id of the nil KSUID is wrong:", id1, "!=", prev)
 	}
 
-	id0 = Max
-	id1 = KSUID{
-		0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe,
+	if id2 != next {
+		t.Error("next id of the nil KSUID is wrong:", id2, "!=", next)
 	}
-	id2 = id0.Prev()
-
-	if id1 != id2 {
-		t.Error("previous id of the max KSUID is wrong:", id1, "!=", id2)
-	}
-
 }
 
 func BenchmarkAppend(b *testing.B) {
