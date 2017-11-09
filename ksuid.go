@@ -7,6 +7,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"math"
 	"sync"
 	"time"
 )
@@ -310,4 +311,34 @@ func quickSort(a []KSUID, lo int, hi int) {
 		quickSort(a, lo, i-1)
 		quickSort(a, i+1, hi)
 	}
+}
+
+// Next returns the next KSUID after id.
+func (id KSUID) Next() KSUID {
+	zero := makeUint128(0, 0)
+
+	t := id.Timestamp()
+	u := uint128Payload(id)
+	v := add128(u, makeUint128(0, 1))
+
+	if v == zero { // overflow
+		t++
+	}
+
+	return v.ksuid(t)
+}
+
+// Prev returns the previoud KSUID before id.
+func (id KSUID) Prev() KSUID {
+	max := makeUint128(math.MaxUint64, math.MaxUint64)
+
+	t := id.Timestamp()
+	u := uint128Payload(id)
+	v := sub128(u, makeUint128(0, 1))
+
+	if v == max { // overflow
+		t--
+	}
+
+	return v.ksuid(t)
 }

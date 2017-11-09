@@ -266,6 +266,44 @@ func TestSort(t *testing.T) {
 	}
 }
 
+func TestPrevNext(t *testing.T) {
+	tests := []struct {
+		id   KSUID
+		prev KSUID
+		next KSUID
+	}{
+		{
+			id:   Nil,
+			prev: Max,
+			next: KSUID{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+		},
+		{
+			id:   Max,
+			prev: KSUID{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe},
+			next: Nil,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.id.String(), func(t *testing.T) {
+			testPrevNext(t, test.id, test.prev, test.next)
+		})
+	}
+}
+
+func testPrevNext(t *testing.T, id, prev, next KSUID) {
+	id1 := id.Prev()
+	id2 := id.Next()
+
+	if id1 != prev {
+		t.Error("previous id of the nil KSUID is wrong:", id1, "!=", prev)
+	}
+
+	if id2 != next {
+		t.Error("next id of the nil KSUID is wrong:", id2, "!=", next)
+	}
+}
+
 func BenchmarkAppend(b *testing.B) {
 	a := make([]byte, 0, stringEncodedLength)
 	k := New()
