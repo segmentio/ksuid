@@ -46,6 +46,10 @@ func TestCompressedSet(t *testing.T) {
 			scenario: "building a compressed set with a single id repeated multiple times produces the id only once",
 			function: testCompressedSetSingle,
 		},
+		{
+			scenario: "iterating over a compressed sequence returns the full sequence",
+			function: testCompressedSetSequence,
+		},
 	}
 
 	for _, test := range tests {
@@ -230,6 +234,30 @@ func testCompressedSetSingle(t *testing.T) {
 
 	if n == 0 {
 		t.Error("no ids were produced by the compressed set")
+	}
+}
+
+func testCompressedSetSequence(t *testing.T) {
+	seq := Sequence{Seed: New()}
+
+	ids := make([]KSUID, 5)
+
+	for i := 0; i < 5; i++ {
+		ids[i], _ = seq.Next()
+	}
+
+	iter := Compress(ids...).Iter()
+
+	index := 0
+	for iter.Next() {
+		if iter.KSUID != ids[index] {
+			t.Errorf("mismatched id at index %d: %s != %s", index, iter.KSUID, ids[index])
+		}
+		index++
+	}
+
+	if index != 5 {
+		t.Errorf("Expected 5 ids, got %d", index)
 	}
 }
 
