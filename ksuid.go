@@ -191,10 +191,6 @@ func Parse(s string) (KSUID, error) {
 	return FromBytes(dst[:])
 }
 
-func copyString(s string) string {
-	return string([]byte(s))
-}
-
 func timeToCorrectedUTCTimestamp(t time.Time) uint32 {
 	return uint32(t.Unix() - epochStamp)
 }
