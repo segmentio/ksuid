@@ -30,6 +30,9 @@ const (
 	// The length of a KSUID when string (base62) encoded
 	stringEncodedLength = 27
 
+	// A string-encoded minimum value for a KSUID
+	minStringEncoded = "000000000000000000000000000"
+
 	// A string-encoded maximum value for a KSUID
 	maxStringEncoded = "aWgEPTl1tmebfsQzFP4bxwgy80V"
 )
@@ -46,6 +49,7 @@ var (
 
 	errSize        = fmt.Errorf("Valid KSUIDs are %v bytes", byteLength)
 	errStrSize     = fmt.Errorf("Valid encoded KSUIDs are %v characters", stringEncodedLength)
+	errStrValue    = fmt.Errorf("Valid encoded KSUIDs are bounded by %s and %s", minStringEncoded, maxStringEncoded)
 	errPayloadSize = fmt.Errorf("Valid KSUID payloads are %v bytes", payloadLengthInBytes)
 
 	// Represents a completely empty (invalid) KSUID
@@ -179,8 +183,16 @@ func Parse(s string) (KSUID, error) {
 	dst := [byteLength]byte{}
 
 	copy(src[:], s[:])
-	fastDecodeBase62(dst[:], src[:])
+
+	if err := fastDecodeBase62(dst[:], src[:]); err != nil {
+		return Nil, errStrValue
+	}
+
 	return FromBytes(dst[:])
+}
+
+func copyString(s string) string {
+	return string([]byte(s))
 }
 
 func timeToCorrectedUTCTimestamp(t time.Time) uint32 {
