@@ -97,6 +97,19 @@ func TestParse(t *testing.T) {
 	}
 }
 
+func TestIssue25(t *testing.T) {
+	// https://github.com/segmentio/ksuid/issues/25
+	for _, s := range []string{
+		"aaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		"aWgEPTl1tmebfsQzFP4bxwgy80!",
+	} {
+		_, err := Parse(s)
+		if err != errStrValue {
+			t.Error("invalid KSUID representations cannot be successfully parsed, got err =", err)
+		}
+	}
+}
+
 func TestEncodeAndDecode(t *testing.T) {
 	x := New()
 	builtFromEncodedString, err := Parse(x.String())

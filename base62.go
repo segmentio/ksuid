@@ -1,11 +1,17 @@
 package ksuid
 
+import "errors"
+
 const (
 	// lexographic ordering (based on Unicode table) is 0-9A-Za-z
 	base62Characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 	zeroString       = "000000000000000000000000000"
 	offsetUppercase  = 10
 	offsetLowercase  = 36
+)
+
+var (
+	errShortBuffer = errors.New("the output buffer is too small to hold to decoded value")
 )
 
 // Converts a base 62 byte into the number value that it represents.
@@ -102,7 +108,7 @@ func fastAppendEncodeBase62(dst []byte, src []byte) []byte {
 // is 27 bytes long and dst is 20 bytes long.
 //
 // Any unused bytes in dst will be set to zero.
-func fastDecodeBase62(dst []byte, src []byte) {
+func fastDecodeBase62(dst []byte, src []byte) error {
 	const srcBase = 62
 	const dstBase = 4294967296
 
@@ -156,6 +162,10 @@ func fastDecodeBase62(dst []byte, src []byte) {
 			}
 		}
 
+		if n < 4 {
+			return errShortBuffer
+		}
+
 		dst[n-4] = byte(remainder >> 24)
 		dst[n-3] = byte(remainder >> 16)
 		dst[n-2] = byte(remainder >> 8)
@@ -166,6 +176,7 @@ func fastDecodeBase62(dst []byte, src []byte) {
 
 	var zero [20]byte
 	copy(dst[:n], zero[:])
+	return nil
 }
 
 // This function appends the base 62 decoded version of src into dst.
