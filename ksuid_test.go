@@ -330,7 +330,7 @@ func BenchmarkString(b *testing.B) {
 	k := New()
 
 	for i := 0; i != b.N; i++ {
-		k.String()
+		_ = k.String()
 	}
 }
 

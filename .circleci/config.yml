@@ -1,0 +1,12 @@
+version: 2
+jobs:
+  build:
+    working_directory: /go/src/github.com/segmentio/ksuid
+    docker:
+      - image: circleci/golang
+    steps:
+      - checkout
+      - setup_remote_docker: { reusable: true, docker_layer_caching: true }
+      - run: go get -v -t ./...
+      - run: go vet ./...
+      - run: go test -v -race ./...

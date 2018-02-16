@@ -265,7 +265,7 @@ func testCompressedSetNil(t *testing.T) {
 	set := CompressedSet(nil)
 
 	for it := set.Iter(); it.Next(); {
-		t.Error("too many ids returned by the iterator of a nil compressed set: %s", it.KSUID)
+		t.Errorf("too many ids returned by the iterator of a nil compressed set: %s", it.KSUID)
 	}
 }
 
