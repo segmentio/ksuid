@@ -2,6 +2,11 @@
 
 ksuid is a Go library that can generate and parse KSUIDs.
 
+# Install
+```bash
+go get -u github.com/segmentio/ksuid
+```
+
 # What is a KSUID?
 
 KSUID is for K-Sortable Unique IDentifier. It's a way to generate globally
