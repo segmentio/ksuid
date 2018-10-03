@@ -97,37 +97,42 @@ func (v uint128) String() string {
 const wordBitSize = 64
 
 func cmp128(x, y uint128) int {
-	for i := len(x); i != 0; {
-		i--
-		switch {
-		case x[i] < y[i]:
-			return -1
-		case x[i] > y[i]:
-			return +1
-		}
+	if x[1] < y[1] {
+		return -1
+	}
+	if x[1] > y[1] {
+		return 1
+	}
+	if x[0] < y[0] {
+		return -1
+	}
+	if x[0] > y[0] {
+		return 1
 	}
 	return 0
 }
 
 func add128(x, y uint128) (z uint128) {
-	var c uint64
-	for i, xi := range x {
-		yi := y[i]
-		zi := xi + yi + c
-		z[i] = zi
-		c = (xi&yi | (xi|yi)&^zi) >> (wordBitSize - 1)
-	}
+	x0 := x[0]
+	y0 := y[0]
+	z0 := x0 + y0
+	z[0] = z0
+
+	c := (x0&y0 | (x0|y0)&^z0) >> (wordBitSize - 1)
+
+	z[1] = x[1] + y[1] + c
 	return
 }
 
 func sub128(x, y uint128) (z uint128) {
-	var c uint64
-	for i, xi := range x {
-		yi := y[i]
-		zi := xi - yi - c
-		z[i] = zi
-		c = (yi&^xi | (yi|^xi)&zi) >> (wordBitSize - 1)
-	}
+	x0 := x[0]
+	y0 := y[0]
+	z0 := x0 - y0
+	z[0] = z0
+
+	c := (y0&^x0 | (y0|^x0)&z0) >> (wordBitSize - 1)
+
+	z[1] = x[1] - y[1] - c
 	return
 }
 
