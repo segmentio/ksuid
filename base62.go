@@ -112,6 +112,10 @@ func fastDecodeBase62(dst []byte, src []byte) error {
 	const srcBase = 62
 	const dstBase = 4294967296
 
+	// This line helps BCE (Bounds Check Elimination).
+	// It may be safely removed.
+	_ = src[26]
+
 	parts := [27]byte{
 		base62Value(src[0]),
 		base62Value(src[1]),
