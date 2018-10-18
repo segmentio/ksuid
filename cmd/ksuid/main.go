@@ -5,10 +5,10 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
-	"html/template"
 	"io"
 	"os"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/segmentio/ksuid"
