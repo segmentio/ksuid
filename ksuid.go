@@ -91,7 +91,7 @@ func (i KSUID) Bytes() []byte {
 	return i[:]
 }
 
-// Returns true if this is a "nil" KSUID
+// IsNil returns true if this is a "nil" KSUID
 func (i KSUID) IsNil() bool {
 	return i == Nil
 }
@@ -173,7 +173,7 @@ func (i *KSUID) scan(b []byte) error {
 	}
 }
 
-// Decodes a string-encoded representation of a KSUID object
+// Parse decodes a string-encoded representation of a KSUID object
 func Parse(s string) (KSUID, error) {
 	if len(s) != stringEncodedLength {
 		return Nil, errStrSize
@@ -285,7 +285,7 @@ func Sort(ids []KSUID) {
 	quickSort(ids, 0, len(ids)-1)
 }
 
-// Checks whether a slice of KSUIDs is sorted
+// IsSorted checks whether a slice of KSUIDs is sorted
 func IsSorted(ids []KSUID) bool {
 	if len(ids) != 0 {
 		min := ids[0]
