@@ -304,6 +304,16 @@ func TestPrevNext(t *testing.T) {
 	}
 }
 
+func TestGetTimestamp(t *testing.T) {
+	nowTime := time.Now()
+	x, _ := NewRandomWithTime(nowTime)
+	xTime := int64(x.Timestamp())
+	unix := nowTime.Unix()
+	if xTime != unix - epochStamp {
+		t.Fatal(xTime, "!=", unix)
+	}
+}
+
 func testPrevNext(t *testing.T, id, prev, next KSUID) {
 	id1 := id.Prev()
 	id2 := id.Next()
