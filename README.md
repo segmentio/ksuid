@@ -91,7 +91,7 @@ $ ksuid -n 4
 Using the inspect formatting on just 1 ksuid:
 
 ```sh
-$ ksuid -f inspect $(./ksuid)
+$ ksuid -f inspect $(ksuid)
 
 REPRESENTATION:
 
@@ -108,7 +108,7 @@ COMPONENTS:
 Using the template formatting on 4 ksuid:
 
 ```sh
-$ ksuid -f template -t '{{ .Time }}: {{ .Payload }}' $(./ksuid -n 4)
+$ ksuid -f template -t '{{ .Time }}: {{ .Payload }}' $(ksuid -n 4)
 2017-10-09 21:05:37 -0700 PDT: 304102BC687E087CC3A811F21D113CCF
 2017-10-09 21:05:37 -0700 PDT: EAF0B240A9BFA55E079D887120D962F0
 2017-10-09 21:05:37 -0700 PDT: DF0761769909ABB0C7BB9D66F79FC041
