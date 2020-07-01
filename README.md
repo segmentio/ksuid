@@ -67,12 +67,19 @@ This package comes with a simple command-line tool `ksuid`. This tool can
 generate KSUIDs as well as inspect the internal components for debugging
 purposes.
 
+With a valid Go build environment, it can be installed with the command:
+
+```sh
+$ go install github.com/segmentio/ksuid/cmd/ksuid
+```
+
+
 ## Usage examples
 
 ### Generate 4 KSUID
 
 ```sh
-$ ./ksuid -n 4
+$ ksuid -n 4
 0ujsszwN8NRY24YaXiTIE2VWDTS
 0ujsswThIGTUYm2K8FjOOfXtY1K
 0ujssxh0cECutqzMgbtXSGnjorm
@@ -84,7 +91,7 @@ $ ./ksuid -n 4
 Using the inspect formatting on just 1 ksuid:
 
 ```sh
-$ ./ksuid -f inspect $(./ksuid)
+$ ksuid -f inspect $(./ksuid)
 
 REPRESENTATION:
 
@@ -101,7 +108,7 @@ COMPONENTS:
 Using the template formatting on 4 ksuid:
 
 ```sh
-$ ./ksuid -f template -t '{{ .Time }}: {{ .Payload }}' $(./ksuid -n 4)
+$ ksuid -f template -t '{{ .Time }}: {{ .Payload }}' $(./ksuid -n 4)
 2017-10-09 21:05:37 -0700 PDT: 304102BC687E087CC3A811F21D113CCF
 2017-10-09 21:05:37 -0700 PDT: EAF0B240A9BFA55E079D887120D962F0
 2017-10-09 21:05:37 -0700 PDT: DF0761769909ABB0C7BB9D66F79FC041
@@ -113,14 +120,14 @@ $ ./ksuid -f template -t '{{ .Time }}: {{ .Payload }}' $(./ksuid -n 4)
 Generate a new KSUID with the corresponding time using the time formatting:
 
 ```sh
-$ go run cmd/ksuid/main.go -f time -v
+$ ksuid -f time -v
 0uk0ava2lavfJwMceJOOEFXEDxl: 2017-10-09 21:56:00 -0700 PDT
 ```
 
 Generate 4 new KSUID with details using template formatting:
 
 ```sh
-$ ./ksuid -f template -t '{ "timestamp": "{{ .Timestamp }}", "payload": "{{ .Payload }}", "ksuid": "{{.String}}"}' -n 4
+$ ksuid -f template -t '{ "timestamp": "{{ .Timestamp }}", "payload": "{{ .Payload }}", "ksuid": "{{.String}}"}' -n 4
 { "timestamp": "107611700", "payload": "9850EEEC191BF4FF26F99315CE43B0C8", "ksuid": "0uk1Hbc9dQ9pxyTqJ93IUrfhdGq"}
 { "timestamp": "107611700", "payload": "CC55072555316F45B8CA2D2979D3ED0A", "ksuid": "0uk1HdCJ6hUZKDgcxhpJwUl5ZEI"}
 { "timestamp": "107611700", "payload": "BA1C205D6177F0992D15EE606AE32238", "ksuid": "0uk1HcdvF0p8C20KtTfdRSB9XIm"}
@@ -130,7 +137,7 @@ $ ./ksuid -f template -t '{ "timestamp": "{{ .Timestamp }}", "payload": "{{ .Pay
 Display the detailed version of a new KSUID:
 
 ```sh
-$ ./ksuid -f inspect
+$ ksuid -f inspect
 
 REPRESENTATION:
 
