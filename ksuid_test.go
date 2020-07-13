@@ -309,7 +309,7 @@ func TestGetTimestamp(t *testing.T) {
 	x, _ := NewRandomWithTime(nowTime)
 	xTime := int64(x.Timestamp())
 	unix := nowTime.Unix()
-	if xTime != unix - epochStamp {
+	if xTime != unix-epochStamp {
 		t.Fatal(xTime, "!=", unix)
 	}
 }
