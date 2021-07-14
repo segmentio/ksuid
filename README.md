@@ -9,14 +9,6 @@ called a *KSUID*. This library serves as its reference implementation.
 go get -u github.com/segmentio/ksuid
 ```
 
-## Implementations for other languages
-
-- Python: [svix-ksuid](https://github.com/svixhq/python-ksuid/)
-- Ruby: [ksuid-ruby](https://github.com/michaelherold/ksuid-ruby)
-- Java: [ksuid](https://github.com/ksuid/ksuid)
-- Rust: [rksuid](https://github.com/nharring/rksuid)
-- dotNet: [Ksuid.Net](https://github.com/JoyMoe/Ksuid.Net)
-
 ## What is a KSUID?
 
 KSUID is for K-Sortable Unique IDentifier. It is a kind of globally
@@ -228,6 +220,14 @@ $ ksuid -f template -t '{ "timestamp": "{{ .Timestamp }}", "payload": "{{ .Paylo
 { "timestamp": "107611700", "payload": "BA1C205D6177F0992D15EE606AE32238", "ksuid": "0uk1HcdvF0p8C20KtTfdRSB9XIm"}
 { "timestamp": "107611700", "payload": "67517BA309EA62AE7991B27BB6F2FCAC", "ksuid": "0uk1Ha7hGJ1Q9Xbnkt0yZgNwg3g"}
 ```
+
+## Implementations for other languages
+
+- Python: [svix-ksuid](https://github.com/svixhq/python-ksuid/)
+- Ruby: [ksuid-ruby](https://github.com/michaelherold/ksuid-ruby)
+- Java: [ksuid](https://github.com/ksuid/ksuid)
+- Rust: [rksuid](https://github.com/nharring/rksuid)
+- dotNet: [Ksuid.Net](https://github.com/JoyMoe/Ksuid.Net)
 
 ## License
 
