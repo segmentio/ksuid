@@ -1,6 +1,9 @@
 package ksuid
 
-import "errors"
+import (
+	"encoding/binary"
+	"errors"
+)
 
 const (
 	// lexographic ordering (based on Unicode table) is 0-9A-Za-z
@@ -41,23 +44,11 @@ func fastEncodeBase62(dst []byte, src []byte) {
 	// from because this is a O(N^2) algorithm, and we make N = N / 4 by working
 	// on 32 bits at a time.
 	parts := [5]uint32{
-		/*
-			These is an inlined version of:
-
-			  binary.BigEndian.Uint32(src[0:4]),
-			  binary.BigEndian.Uint32(src[4:8]),
-			  binary.BigEndian.Uint32(src[8:12]),
-			  binary.BigEndian.Uint32(src[12:16]),
-			  binary.BigEndian.Uint32(src[16:20]),
-
-			For some reason it gave better performance, may be caused by the
-			bound check that the Uint32 function does.
-		*/
-		uint32(src[0])<<24 | uint32(src[1])<<16 | uint32(src[2])<<8 | uint32(src[3]),
-		uint32(src[4])<<24 | uint32(src[5])<<16 | uint32(src[6])<<8 | uint32(src[7]),
-		uint32(src[8])<<24 | uint32(src[9])<<16 | uint32(src[10])<<8 | uint32(src[11]),
-		uint32(src[12])<<24 | uint32(src[13])<<16 | uint32(src[14])<<8 | uint32(src[15]),
-		uint32(src[16])<<24 | uint32(src[17])<<16 | uint32(src[18])<<8 | uint32(src[19]),
+		binary.BigEndian.Uint32(src[0:4]),
+		binary.BigEndian.Uint32(src[4:8]),
+		binary.BigEndian.Uint32(src[8:12]),
+		binary.BigEndian.Uint32(src[12:16]),
+		binary.BigEndian.Uint32(src[16:20]),
 	}
 
 	n := len(dst)

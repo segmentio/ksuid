@@ -221,6 +221,14 @@ $ ksuid -f template -t '{ "timestamp": "{{ .Timestamp }}", "payload": "{{ .Paylo
 { "timestamp": "107611700", "payload": "67517BA309EA62AE7991B27BB6F2FCAC", "ksuid": "0uk1Ha7hGJ1Q9Xbnkt0yZgNwg3g"}
 ```
 
+## Implementations for other languages
+
+- Python: [svix-ksuid](https://github.com/svixhq/python-ksuid/)
+- Ruby: [ksuid-ruby](https://github.com/michaelherold/ksuid-ruby)
+- Java: [ksuid](https://github.com/ksuid/ksuid)
+- Rust: [rksuid](https://github.com/nharring/rksuid)
+- dotNet: [Ksuid.Net](https://github.com/JoyMoe/Ksuid.Net)
+
 ## License
 
 ksuid source code is available under an MIT [License](/LICENSE.md).
