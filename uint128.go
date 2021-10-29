@@ -3,6 +3,7 @@ package ksuid
 import (
 	"encoding/binary"
 	"fmt"
+	"math/bits"
 )
 
 // uint128 represents an unsigned 128 bits little endian integer.
@@ -25,7 +26,7 @@ func makeUint128FromPayload(payload []byte) uint128 {
 
 func (v uint128) ksuid(timestamp uint32) (out KSUID) {
 	binary.BigEndian.PutUint32(out[:4], timestamp) // time
-	binary.BigEndian.PutUint64(out[4:], v[1])      // high
+	binary.BigEndian.PutUint64(out[4:12], v[1])    // high
 	binary.BigEndian.PutUint64(out[12:], v[0])     // low
 	return
 }
@@ -39,8 +40,6 @@ func (v uint128) bytes() (out [16]byte) {
 func (v uint128) String() string {
 	return fmt.Sprintf("0x%016X%016X", v[0], v[1])
 }
-
-const wordBitSize = 64
 
 func cmp128(x, y uint128) int {
 	if x[1] < y[1] {
@@ -59,29 +58,22 @@ func cmp128(x, y uint128) int {
 }
 
 func add128(x, y uint128) (z uint128) {
-	x0 := x[0]
-	y0 := y[0]
-	z0 := x0 + y0
-	z[0] = z0
-
-	c := (x0&y0 | (x0|y0)&^z0) >> (wordBitSize - 1)
-
-	z[1] = x[1] + y[1] + c
+	var c uint64
+	z[0], c = bits.Add64(x[0], y[0], 0)
+	z[1], _ = bits.Add64(x[1], y[1], c)
 	return
 }
 
 func sub128(x, y uint128) (z uint128) {
-	x0 := x[0]
-	y0 := y[0]
-	z0 := x0 - y0
-	z[0] = z0
-
-	c := (y0&^x0 | (y0|^x0)&z0) >> (wordBitSize - 1)
-
-	z[1] = x[1] - y[1] - c
+	var b uint64
+	z[0], b = bits.Sub64(x[0], y[0], 0)
+	z[1], _ = bits.Sub64(x[1], y[1], b)
 	return
 }
 
-func incr128(x uint128) uint128 {
-	return add128(x, uint128{1, 0})
+func incr128(x uint128) (z uint128) {
+	var c uint64
+	z[0], c = bits.Add64(x[0], 1, 0)
+	z[1] = x[1] + c
+	return
 }
