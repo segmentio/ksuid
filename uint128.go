@@ -1,6 +1,9 @@
 package ksuid
 
-import "fmt"
+import (
+	"encoding/binary"
+	"fmt"
+)
 
 // uint128 represents an unsigned 128 bits little endian integer.
 type uint128 [2]uint64
@@ -15,79 +18,22 @@ func makeUint128(high uint64, low uint64) uint128 {
 
 func makeUint128FromPayload(payload []byte) uint128 {
 	return uint128{
-		// low
-		uint64(payload[8])<<56 |
-			uint64(payload[9])<<48 |
-			uint64(payload[10])<<40 |
-			uint64(payload[11])<<32 |
-			uint64(payload[12])<<24 |
-			uint64(payload[13])<<16 |
-			uint64(payload[14])<<8 |
-			uint64(payload[15]),
-		// high
-		uint64(payload[0])<<56 |
-			uint64(payload[1])<<48 |
-			uint64(payload[2])<<40 |
-			uint64(payload[3])<<32 |
-			uint64(payload[4])<<24 |
-			uint64(payload[5])<<16 |
-			uint64(payload[6])<<8 |
-			uint64(payload[7]),
+		binary.BigEndian.Uint64(payload[8:]), // low
+		binary.BigEndian.Uint64(payload[:8]), // high
 	}
 }
 
-func (v uint128) ksuid(timestamp uint32) KSUID {
-	return KSUID{
-		// time
-		byte(timestamp >> 24),
-		byte(timestamp >> 16),
-		byte(timestamp >> 8),
-		byte(timestamp),
-
-		// high
-		byte(v[1] >> 56),
-		byte(v[1] >> 48),
-		byte(v[1] >> 40),
-		byte(v[1] >> 32),
-		byte(v[1] >> 24),
-		byte(v[1] >> 16),
-		byte(v[1] >> 8),
-		byte(v[1]),
-
-		// low
-		byte(v[0] >> 56),
-		byte(v[0] >> 48),
-		byte(v[0] >> 40),
-		byte(v[0] >> 32),
-		byte(v[0] >> 24),
-		byte(v[0] >> 16),
-		byte(v[0] >> 8),
-		byte(v[0]),
-	}
+func (v uint128) ksuid(timestamp uint32) (out KSUID) {
+	binary.BigEndian.PutUint32(out[:4], timestamp) // time
+	binary.BigEndian.PutUint64(out[4:], v[1])      // high
+	binary.BigEndian.PutUint64(out[12:], v[0])     // low
+	return
 }
 
-func (v uint128) bytes() [16]byte {
-	return [16]byte{
-		// high
-		byte(v[1] >> 56),
-		byte(v[1] >> 48),
-		byte(v[1] >> 40),
-		byte(v[1] >> 32),
-		byte(v[1] >> 24),
-		byte(v[1] >> 16),
-		byte(v[1] >> 8),
-		byte(v[1]),
-
-		// low
-		byte(v[0] >> 56),
-		byte(v[0] >> 48),
-		byte(v[0] >> 40),
-		byte(v[0] >> 32),
-		byte(v[0] >> 24),
-		byte(v[0] >> 16),
-		byte(v[0] >> 8),
-		byte(v[0]),
-	}
+func (v uint128) bytes() (out [16]byte) {
+	binary.BigEndian.PutUint64(out[:8], v[1])
+	binary.BigEndian.PutUint64(out[8:], v[0])
+	return
 }
 
 func (v uint128) String() string {
