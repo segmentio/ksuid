@@ -228,6 +228,7 @@ $ ksuid -f template -t '{ "timestamp": "{{ .Timestamp }}", "payload": "{{ .Paylo
 - Java: [ksuid](https://github.com/ksuid/ksuid)
 - Rust: [rksuid](https://github.com/nharring/rksuid)
 - dotNet: [Ksuid.Net](https://github.com/JoyMoe/Ksuid.Net)
+- Zig: [zig-ksuid](https://github.com/toffaletti/zig-ksuid)
 
 ## License
 
