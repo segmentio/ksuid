@@ -57,7 +57,7 @@ standard. The additional timestamp component can be considered "bonus entropy"
 which further decreases the probability of collisions, to the point of physical
 infeasibility in any practical implementation.
 
-### Highly Portable Representations
+### 3. Highly Portable Representations
 
 The text *and* binary representations are lexicographically sortable, which
 allows them to be dropped into systems which do not natively support KSUIDs
