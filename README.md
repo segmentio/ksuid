@@ -27,15 +27,17 @@ There are numerous methods for generating unique identifiers, so why KSUID?
 3. Highly portable representations
 
 Even if only one of these properties are important to you, KSUID is a great
-choice! :) Many projects chose to use KSUIDs *just* because the text 
+choice! :) Many projects chose to use KSUIDs *just* because the text
 representation is copy-and-paste friendly.
+
+For a follow up read on the topic: [A brief history of UUID](https://segment.com/blog/a-brief-history-of-the-uuid/)
 
 ### 1. Naturally Ordered By Generation Time
 
 Unlike the more ubiquitous UUIDv4, a KSUID contains a timestamp component
 that allows them to be loosely sorted by generation time. This is not a strong
 guarantee (an invariant) as it depends on wall clocks, but is still incredibly
-useful in practice. Both the binary and text representations will sort by 
+useful in practice. Both the binary and text representations will sort by
 creation time without any special sorting logic.
 
 ### 2. Collision-free, Coordination-free, Dependency-free
@@ -176,7 +178,7 @@ COMPONENTS:
     Payload: B5A1CD34B5F99D1154FB6853345C9735
 ```
 
-### Generate a KSUID and inspect its components 
+### Generate a KSUID and inspect its components
 
 ```sh
 $ ksuid -f inspect
@@ -227,8 +229,9 @@ $ ksuid -f template -t '{ "timestamp": "{{ .Timestamp }}", "payload": "{{ .Paylo
 - Ruby: [ksuid-ruby](https://github.com/michaelherold/ksuid-ruby)
 - Java: [ksuid](https://github.com/ksuid/ksuid)
 - Java: [ksuid-creator](https://github.com/f4b6a3/ksuid-creator)
-- Rust: [rksuid](https://github.com/nharring/rksuid)
+- Rust: [svix-ksuid](https://github.com/svix/rust-ksuid)
 - dotNet: [Ksuid.Net](https://github.com/JoyMoe/Ksuid.Net)
+- Erlang: [erl-ksuid](https://github.com/exograd/erl-ksuid)
 
 ## License
 
