@@ -228,6 +228,7 @@ $ ksuid -f template -t '{ "timestamp": "{{ .Timestamp }}", "payload": "{{ .Paylo
 - Python: [svix-ksuid](https://github.com/svixhq/python-ksuid/)
 - Ruby: [ksuid-ruby](https://github.com/michaelherold/ksuid-ruby)
 - Java: [ksuid](https://github.com/ksuid/ksuid)
+- Java: [ksuid-creator](https://github.com/f4b6a3/ksuid-creator)
 - Rust: [svix-ksuid](https://github.com/svix/rust-ksuid)
 - dotNet: [Ksuid.Net](https://github.com/JoyMoe/Ksuid.Net)
 - Erlang: [erl-ksuid](https://github.com/exograd/erl-ksuid)
