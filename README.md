@@ -223,6 +223,50 @@ $ ksuid -f template -t '{ "timestamp": "{{ .Timestamp }}", "payload": "{{ .Paylo
 { "timestamp": "107611700", "payload": "67517BA309EA62AE7991B27BB6F2FCAC", "ksuid": "0uk1Ha7hGJ1Q9Xbnkt0yZgNwg3g"}
 ```
 
+## OrNil functions
+
+There are times when you are sure your ksuid is correct. But you need to get it from bytes or string and pass it
+it's to the structure. For this, there are OrNil functions that return ksuid.Nil on error and can be called 
+directly in the structure.
+
+**Functions:**
+- `ParseOrNil()`
+- `FromPartsOrNil()`
+- `FromBytesOrNil()`
+
+An example of using the function without OrNil:
+```go
+func getPosts(before, after []byte) {
+	b, err := ksuid.FromBytes(before)
+	if err != nil {
+		// handle error
+	}
+
+	a, err := ksuid.FromBytes(after)
+	if err != nil {
+		// handle error
+	}
+
+	sortOptions := SortOptions{Before: b, After: a}
+}
+```
+
+It is much more convenient to do it like this:
+
+```go
+func getPosts(before, after []byte) {
+	sortOptions := SortOptions{
+		Before: ksuid.FromBytesOrNil(before),
+		After:  ksuid.FromBytesOrNil(after),
+	}
+}
+```
+
+OrNil functions are also used in many other libraries:
+
+- [satori/go.uuid](https://github.com/satori/go.uuid)
+- [oklog/ulid](https://github.com/oklog/ulid) (panic)
+
 ## Implementations for other languages
 
 - Python: [svix-ksuid](https://github.com/svixhq/python-ksuid/)
