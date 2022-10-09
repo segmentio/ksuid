@@ -1,0 +1,23 @@
+name: Test
+on:
+  - pull_request
+
+jobs:
+  test:
+    runs-on: linux
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Go
+        uses: actions/setup-go@3
+        with:
+          go-version: '>=1.17.0'
+
+      - name: Download Dependencies
+        run: go get -v -t ./...
+
+      - name: Go vet
+        run: go vet ./...
+
+      - name: Run Tests
+        run: go test -v -race ./...
