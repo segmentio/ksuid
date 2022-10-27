@@ -270,6 +270,7 @@ OrNil functions are also used in many other libraries:
 ## Implementations for other languages
 
 - Python: [svix-ksuid](https://github.com/svixhq/python-ksuid/)
+- Python: [cyksuid](https://github.com/timonwong/cyksuid)
 - Ruby: [ksuid-ruby](https://github.com/michaelherold/ksuid-ruby)
 - Java: [ksuid](https://github.com/ksuid/ksuid)
 - Java: [ksuid-creator](https://github.com/f4b6a3/ksuid-creator)
