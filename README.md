@@ -278,6 +278,7 @@ OrNil functions are also used in many other libraries:
 - dotNet: [Ksuid.Net](https://github.com/JoyMoe/Ksuid.Net)
 - dotnet: [KsuidDotNet](https://github.com/steve-warren/ksuid)
 - Erlang: [erl-ksuid](https://github.com/exograd/erl-ksuid)
+- PHP: [ksuid](https://github.com/tiny-blocks/ksuid)
 
 ## License
 
