@@ -27,15 +27,17 @@ There are numerous methods for generating unique identifiers, so why KSUID?
 3. Highly portable representations
 
 Even if only one of these properties are important to you, KSUID is a great
-choice! :) Many projects chose to use KSUIDs *just* because the text 
+choice! :) Many projects chose to use KSUIDs *just* because the text
 representation is copy-and-paste friendly.
+
+For a follow up read on the topic: [A brief history of UUID](https://segment.com/blog/a-brief-history-of-the-uuid/)
 
 ### 1. Naturally Ordered By Generation Time
 
 Unlike the more ubiquitous UUIDv4, a KSUID contains a timestamp component
 that allows them to be loosely sorted by generation time. This is not a strong
 guarantee (an invariant) as it depends on wall clocks, but is still incredibly
-useful in practice. Both the binary and text representations will sort by 
+useful in practice. Both the binary and text representations will sort by
 creation time without any special sorting logic.
 
 ### 2. Collision-free, Coordination-free, Dependency-free
@@ -57,7 +59,7 @@ standard. The additional timestamp component can be considered "bonus entropy"
 which further decreases the probability of collisions, to the point of physical
 infeasibility in any practical implementation.
 
-### Highly Portable Representations
+### 3. Highly Portable Representations
 
 The text *and* binary representations are lexicographically sortable, which
 allows them to be dropped into systems which do not natively support KSUIDs
@@ -176,7 +178,7 @@ COMPONENTS:
     Payload: B5A1CD34B5F99D1154FB6853345C9735
 ```
 
-### Generate a KSUID and inspect its components 
+### Generate a KSUID and inspect its components
 
 ```sh
 $ ksuid -f inspect
@@ -221,13 +223,61 @@ $ ksuid -f template -t '{ "timestamp": "{{ .Timestamp }}", "payload": "{{ .Paylo
 { "timestamp": "107611700", "payload": "67517BA309EA62AE7991B27BB6F2FCAC", "ksuid": "0uk1Ha7hGJ1Q9Xbnkt0yZgNwg3g"}
 ```
 
+## OrNil functions
+
+There are times when you are sure your ksuid is correct. But you need to get it from bytes or string and pass it
+it's to the structure. For this, there are OrNil functions that return ksuid.Nil on error and can be called 
+directly in the structure.
+
+**Functions:**
+- `ParseOrNil()`
+- `FromPartsOrNil()`
+- `FromBytesOrNil()`
+
+An example of using the function without OrNil:
+```go
+func getPosts(before, after []byte) {
+	b, err := ksuid.FromBytes(before)
+	if err != nil {
+		// handle error
+	}
+
+	a, err := ksuid.FromBytes(after)
+	if err != nil {
+		// handle error
+	}
+
+	sortOptions := SortOptions{Before: b, After: a}
+}
+```
+
+It is much more convenient to do it like this:
+
+```go
+func getPosts(before, after []byte) {
+	sortOptions := SortOptions{
+		Before: ksuid.FromBytesOrNil(before),
+		After:  ksuid.FromBytesOrNil(after),
+	}
+}
+```
+
+OrNil functions are also used in many other libraries:
+
+- [satori/go.uuid](https://github.com/satori/go.uuid)
+- [oklog/ulid](https://github.com/oklog/ulid) (panic)
+
 ## Implementations for other languages
 
 - Python: [svix-ksuid](https://github.com/svixhq/python-ksuid/)
+- Python: [cyksuid](https://github.com/timonwong/cyksuid)
 - Ruby: [ksuid-ruby](https://github.com/michaelherold/ksuid-ruby)
 - Java: [ksuid](https://github.com/ksuid/ksuid)
-- Rust: [rksuid](https://github.com/nharring/rksuid)
+- Java: [ksuid-creator](https://github.com/f4b6a3/ksuid-creator)
+- Rust: [svix-ksuid](https://github.com/svix/rust-ksuid)
 - dotNet: [Ksuid.Net](https://github.com/JoyMoe/Ksuid.Net)
+- dotnet: [KsuidDotNet](https://github.com/steve-warren/ksuid)
+- Erlang: [erl-ksuid](https://github.com/exograd/erl-ksuid)
 - Zig: [zig-ksuid](https://github.com/toffaletti/zig-ksuid)
 
 ## License

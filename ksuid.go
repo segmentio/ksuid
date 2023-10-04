@@ -191,6 +191,16 @@ func Parse(s string) (KSUID, error) {
 	return FromBytes(dst[:])
 }
 
+// Parse decodes a string-encoded representation of a KSUID object.
+// Same behavior as Parse, but returns a Nil KSUID on error.
+func ParseOrNil(s string) KSUID {
+	ksuid, err := Parse(s)
+	if err != nil {
+		return Nil
+	}
+	return ksuid
+}
+
 func timeToCorrectedUTCTimestamp(t time.Time) uint32 {
 	return uint32(t.Unix() - epochStamp)
 }
@@ -251,6 +261,16 @@ func FromParts(t time.Time, payload []byte) (KSUID, error) {
 	return ksuid, nil
 }
 
+// Constructs a KSUID from constituent parts.
+// Same behavior as FromParts, but returns a Nil KSUID on error.
+func FromPartsOrNil(t time.Time, payload []byte) KSUID {
+	ksuid, err := FromParts(t, payload)
+	if err != nil {
+		return Nil
+	}
+	return ksuid
+}
+
 // Constructs a KSUID from a 20-byte binary representation
 func FromBytes(b []byte) (KSUID, error) {
 	var ksuid KSUID
@@ -261,6 +281,16 @@ func FromBytes(b []byte) (KSUID, error) {
 
 	copy(ksuid[:], b)
 	return ksuid, nil
+}
+
+// Constructs a KSUID from a 20-byte binary representation.
+// Same behavior as FromBytes, but returns a Nil KSUID on error.
+func FromBytesOrNil(b []byte) KSUID {
+	ksuid, err := FromBytes(b)
+	if err != nil {
+		return Nil
+	}
+	return ksuid
 }
 
 // Sets the global source of random bytes for KSUID generation. This
