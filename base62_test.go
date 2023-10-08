@@ -51,11 +51,8 @@ func TestLexographicOrdering(t *testing.T) {
 
 	if !sort.StringsAreSorted(unsortedStrings) {
 		sortedStrings := make([]string, len(unsortedStrings))
-		for i, s := range unsortedStrings {
-			sortedStrings[i] = s
-		}
+		copy(sortedStrings, unsortedStrings)
 		sort.Strings(sortedStrings)
-
 		t.Fatal("base62 encoder does not produce lexographically sorted output.",
 			"expected:", sortedStrings,
 			"actual:", unsortedStrings)
