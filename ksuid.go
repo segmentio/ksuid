@@ -14,7 +14,7 @@ import (
 
 const (
 	// KSUID's epoch starts more recently so that the 32-bit number space gives a
-	// significantly higher useful lifetime of around 136 years from March 2017.
+	// significantly higher useful lifetime of around 136 years from May 2014.
 	// This number (14e8) was picked to be easy to remember.
 	epochStamp int64 = 1400000000
 
