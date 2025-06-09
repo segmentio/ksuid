@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"database/sql/driver"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"io"
 	"math"
@@ -38,8 +39,9 @@ const (
 )
 
 // KSUIDs are 20 bytes:
-//  00-03 byte: uint32 BE UTC timestamp with custom epoch
-//  04-19 byte: random "payload"
+//
+//	00-03 byte: uint32 BE UTC timestamp with custom epoch
+//	04-19 byte: random "payload"
 type KSUID [byteLength]byte
 
 var (
@@ -116,6 +118,10 @@ func (i KSUID) MarshalBinary() ([]byte, error) {
 	return i.Bytes(), nil
 }
 
+func (i KSUID) MarshalJSON() ([]byte, error) {
+	return json.Marshal(i.String())
+}
+
 func (i *KSUID) UnmarshalText(b []byte) error {
 	id, err := Parse(string(b))
 	if err != nil {
@@ -130,6 +136,21 @@ func (i *KSUID) UnmarshalBinary(b []byte) error {
 	if err != nil {
 		return err
 	}
+	*i = id
+	return nil
+}
+
+func (i *KSUID) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+
+	id, err := Parse(s)
+	if err != nil {
+		return fmt.Errorf("invalid KSUID: %w", err)
+	}
+
 	*i = id
 	return nil
 }
