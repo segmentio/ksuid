@@ -29,3 +29,6 @@ _testmain.go
 
 # govendor
 /vendor/*/
+
+# ide
+.idea

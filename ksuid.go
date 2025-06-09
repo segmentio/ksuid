@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"database/sql/driver"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"io"
 	"math"
@@ -38,8 +39,9 @@ const (
 )
 
 // KSUIDs are 20 bytes:
-//  00-03 byte: uint32 BE UTC timestamp with custom epoch
-//  04-19 byte: random "payload"
+//
+//	00-03 byte: uint32 BE UTC timestamp with custom epoch
+//	04-19 byte: random "payload"
 type KSUID [byteLength]byte
 
 var (
@@ -102,6 +104,11 @@ func (i KSUID) Get() interface{} {
 	return i
 }
 
+// Equal compares two KSUIDs for equality. It returns true if the two KSUIDs
+func (i KSUID) Equal(k2 KSUID) bool {
+	return bytes.Equal(i[:], k2[:])
+}
+
 // Set satisfies the flag.Value interface, making it possible to use KSUIDs as
 // part of of the command line options of a program.
 func (i *KSUID) Set(s string) error {
@@ -114,6 +121,10 @@ func (i KSUID) MarshalText() ([]byte, error) {
 
 func (i KSUID) MarshalBinary() ([]byte, error) {
 	return i.Bytes(), nil
+}
+
+func (i KSUID) MarshalJSON() ([]byte, error) {
+	return json.Marshal(i.String())
 }
 
 func (i *KSUID) UnmarshalText(b []byte) error {
@@ -130,6 +141,21 @@ func (i *KSUID) UnmarshalBinary(b []byte) error {
 	if err != nil {
 		return err
 	}
+	*i = id
+	return nil
+}
+
+func (i *KSUID) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+
+	id, err := Parse(s)
+	if err != nil {
+		return fmt.Errorf("invalid KSUID: %w", err)
+	}
+
 	*i = id
 	return nil
 }
