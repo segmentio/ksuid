@@ -2,7 +2,6 @@ package ksuid
 
 import (
 	"bytes"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"sort"
@@ -122,6 +121,20 @@ func TestEncodeAndDecode(t *testing.T) {
 	}
 }
 
+func TestEqual(t *testing.T) {
+	x := New()
+	y := x
+
+	if !x.Equal(y) {
+		t.Error(x, "!=", y)
+	}
+
+	z := New()
+	if x.Equal(z) {
+		t.Error(x, "==", z)
+	}
+}
+
 func TestMarshalText(t *testing.T) {
 	var id1 = New()
 	var id2 KSUID
@@ -164,12 +177,13 @@ func TestMashalJSON(t *testing.T) {
 	var id1 = New()
 	var id2 KSUID
 
-	if b, err := json.Marshal(id1); err != nil {
-		t.Fatal(err)
-	} else if err := json.Unmarshal(b, &id2); err != nil {
-		t.Fatal(err)
-	} else if id1 != id2 {
-		t.Error(id1, "!=", id2)
+	b, err := id1.MarshalJSON()
+	if err != nil {
+		t.Error("unexpected error on marshal:", err)
+	}
+
+	if err := id2.UnmarshalJSON(b); err != nil {
+		t.Error("failed to unmarshal JSON:", err)
 	}
 }
 
@@ -309,7 +323,7 @@ func TestGetTimestamp(t *testing.T) {
 	x, _ := NewRandomWithTime(nowTime)
 	xTime := int64(x.Timestamp())
 	unix := nowTime.Unix()
-	if xTime != unix - epochStamp {
+	if xTime != unix-epochStamp {
 		t.Fatal(xTime, "!=", unix)
 	}
 }

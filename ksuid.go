@@ -104,6 +104,11 @@ func (i KSUID) Get() interface{} {
 	return i
 }
 
+// Equal compares two KSUIDs for equality. It returns true if the two KSUIDs
+func (i KSUID) Equal(k2 KSUID) bool {
+	return bytes.Equal(i[:], k2[:])
+}
+
 // Set satisfies the flag.Value interface, making it possible to use KSUIDs as
 // part of of the command line options of a program.
 func (i *KSUID) Set(s string) error {
