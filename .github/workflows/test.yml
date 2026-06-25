@@ -11,12 +11,12 @@ jobs:
           - '1.18.x'
           - '1.19.x'
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-large
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5  # v2
 
       - name: Setup Go ${{ matrix.go }}
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@be3c94b385c4f180051c996d336f57a34c397495  # v3
         with:
           go-version: ${{ matrix.go }}
 
