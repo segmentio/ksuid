@@ -387,3 +387,19 @@ func BenchmarkNew(b *testing.B) {
 		}
 	})
 }
+
+func TestParseInvalidBase62(t *testing.T) {
+	// '?' is not a base62 digit; Parse used to accept it via default branch.
+	_, err := Parse("0??????????????????????????")
+	if err == nil {
+		t.Fatal("expected error for non-base62 characters")
+	}
+	_, err = Parse("0!!!!!!!!!!!!!!!!!!!!!!!!!!")
+	if err == nil {
+		t.Fatal("expected error for non-base62 characters")
+	}
+	// still accepts valid zero and normal ids
+	if _, err := Parse(Nil.String()); err != nil {
+		t.Fatalf("valid nil string: %v", err)
+	}
+}
