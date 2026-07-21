@@ -66,7 +66,11 @@ func TestBase62Value(t *testing.T) {
 	s := base62Characters
 
 	for i := range s {
-		v := int(base62Value(s[i]))
+		v0, ok := base62Value(s[i])
+		if !ok {
+			t.Fatalf("expected valid base62 digit %q", s[i])
+		}
+		v := int(v0)
 
 		if v != i {
 			t.Error("bad value:")

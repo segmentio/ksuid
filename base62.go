@@ -14,18 +14,22 @@ const (
 )
 
 var (
-	errShortBuffer = errors.New("the output buffer is too small to hold to decoded value")
+	errShortBuffer   = errors.New("the output buffer is too small to hold to decoded value")
+	errInvalidBase62 = errors.New("invalid base62 character in KSUID")
 )
 
 // Converts a base 62 byte into the number value that it represents.
-func base62Value(digit byte) byte {
+// Returns false if digit is not a valid base62 character.
+func base62Value(digit byte) (byte, bool) {
 	switch {
 	case digit >= '0' && digit <= '9':
-		return digit - '0'
+		return digit - '0', true
 	case digit >= 'A' && digit <= 'Z':
-		return offsetUppercase + (digit - 'A')
+		return offsetUppercase + (digit - 'A'), true
+	case digit >= 'a' && digit <= 'z':
+		return offsetLowercase + (digit - 'a'), true
 	default:
-		return offsetLowercase + (digit - 'a')
+		return 0, false
 	}
 }
 
@@ -107,36 +111,13 @@ func fastDecodeBase62(dst []byte, src []byte) error {
 	// It may be safely removed.
 	_ = src[26]
 
-	parts := [27]byte{
-		base62Value(src[0]),
-		base62Value(src[1]),
-		base62Value(src[2]),
-		base62Value(src[3]),
-		base62Value(src[4]),
-		base62Value(src[5]),
-		base62Value(src[6]),
-		base62Value(src[7]),
-		base62Value(src[8]),
-		base62Value(src[9]),
-
-		base62Value(src[10]),
-		base62Value(src[11]),
-		base62Value(src[12]),
-		base62Value(src[13]),
-		base62Value(src[14]),
-		base62Value(src[15]),
-		base62Value(src[16]),
-		base62Value(src[17]),
-		base62Value(src[18]),
-		base62Value(src[19]),
-
-		base62Value(src[20]),
-		base62Value(src[21]),
-		base62Value(src[22]),
-		base62Value(src[23]),
-		base62Value(src[24]),
-		base62Value(src[25]),
-		base62Value(src[26]),
+	var parts [27]byte
+	for i := 0; i < 27; i++ {
+		v, ok := base62Value(src[i])
+		if !ok {
+			return errInvalidBase62
+		}
+		parts[i] = v
 	}
 
 	n := len(dst)
