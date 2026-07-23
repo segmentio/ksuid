@@ -14,18 +14,22 @@ const (
 )
 
 var (
-	errShortBuffer = errors.New("the output buffer is too small to hold to decoded value")
+	errShortBuffer   = errors.New("the output buffer is too small to hold to decoded value")
+	errInvalidBase62 = errors.New("invalid base62 character in KSUID")
 )
 
 // Converts a base 62 byte into the number value that it represents.
+// Returns 0xFF if digit is not a valid base62 character.
 func base62Value(digit byte) byte {
 	switch {
 	case digit >= '0' && digit <= '9':
 		return digit - '0'
 	case digit >= 'A' && digit <= 'Z':
 		return offsetUppercase + (digit - 'A')
-	default:
+	case digit >= 'a' && digit <= 'z':
 		return offsetLowercase + (digit - 'a')
+	default:
+		return 0xFF
 	}
 }
 
@@ -137,6 +141,11 @@ func fastDecodeBase62(dst []byte, src []byte) error {
 		base62Value(src[24]),
 		base62Value(src[25]),
 		base62Value(src[26]),
+	}
+	for _, c := range parts {
+		if c >= 62 {
+			return errInvalidBase62
+		}
 	}
 
 	n := len(dst)

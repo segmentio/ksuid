@@ -387,3 +387,19 @@ func BenchmarkNew(b *testing.B) {
 		}
 	})
 }
+
+func TestParseInvalidBase62(t *testing.T) {
+	// Issue #74: non-base62 characters must be rejected.
+	if _, err := Parse("0??????????????????????????"); err == nil {
+		t.Fatal("expected error for non-base62 characters")
+	}
+	valid := New().String()
+	b := []byte(valid)
+	b[5] = '!'
+	if _, err := Parse(string(b)); err == nil {
+		t.Fatal("expected error for invalid character in the middle")
+	}
+	if _, err := Parse(valid); err != nil {
+		t.Fatalf("valid KSUID rejected: %v", err)
+	}
+}
