@@ -38,8 +38,9 @@ const (
 )
 
 // KSUIDs are 20 bytes:
-//  00-03 byte: uint32 BE UTC timestamp with custom epoch
-//  04-19 byte: random "payload"
+//
+//	00-03 byte: uint32 BE UTC timestamp with custom epoch
+//	04-19 byte: random "payload"
 type KSUID [byteLength]byte
 
 var (
@@ -51,6 +52,7 @@ var (
 	errStrSize     = fmt.Errorf("Valid encoded KSUIDs are %v characters", stringEncodedLength)
 	errStrValue    = fmt.Errorf("Valid encoded KSUIDs are bounded by %s and %s", minStringEncoded, maxStringEncoded)
 	errPayloadSize = fmt.Errorf("Valid KSUID payloads are %v bytes", payloadLengthInBytes)
+	errTime        = fmt.Errorf("Valid KSUID timestamps are bounded by %s and %s", time.Unix(epochStamp, 0).UTC(), time.Unix(epochStamp+math.MaxUint32, 0).UTC())
 
 	// Represents a completely empty (invalid) KSUID
 	Nil KSUID
@@ -201,8 +203,12 @@ func ParseOrNil(s string) KSUID {
 	return ksuid
 }
 
-func timeToCorrectedUTCTimestamp(t time.Time) uint32 {
-	return uint32(t.Unix() - epochStamp)
+func timeToCorrectedUTCTimestamp(t time.Time) (uint32, error) {
+	u := t.Unix()
+	if u < epochStamp || u > epochStamp+math.MaxUint32 {
+		return 0, errTime
+	}
+	return uint32(u - epochStamp), nil
 }
 
 func correctedUTCTimestampToTime(ts uint32) time.Time {
@@ -225,6 +231,11 @@ func NewRandom() (ksuid KSUID, err error) {
 }
 
 func NewRandomWithTime(t time.Time) (ksuid KSUID, err error) {
+	ts, err := timeToCorrectedUTCTimestamp(t)
+	if err != nil {
+		return Nil, err
+	}
+
 	// Go's default random number generators are not safe for concurrent use by
 	// multiple goroutines, the use of the rander and randBuffer are explicitly
 	// synchronized here.
@@ -240,7 +251,6 @@ func NewRandomWithTime(t time.Time) (ksuid KSUID, err error) {
 		return
 	}
 
-	ts := timeToCorrectedUTCTimestamp(t)
 	binary.BigEndian.PutUint32(ksuid[:timestampLengthInBytes], ts)
 	return
 }
@@ -251,9 +261,12 @@ func FromParts(t time.Time, payload []byte) (KSUID, error) {
 		return Nil, errPayloadSize
 	}
 
-	var ksuid KSUID
+	ts, err := timeToCorrectedUTCTimestamp(t)
+	if err != nil {
+		return Nil, err
+	}
 
-	ts := timeToCorrectedUTCTimestamp(t)
+	var ksuid KSUID
 	binary.BigEndian.PutUint32(ksuid[:timestampLengthInBytes], ts)
 
 	copy(ksuid[timestampLengthInBytes:], payload)

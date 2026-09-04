@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 	"testing"
@@ -309,7 +310,7 @@ func TestGetTimestamp(t *testing.T) {
 	x, _ := NewRandomWithTime(nowTime)
 	xTime := int64(x.Timestamp())
 	unix := nowTime.Unix()
-	if xTime != unix - epochStamp {
+	if xTime != unix-epochStamp {
 		t.Fatal(xTime, "!=", unix)
 	}
 }
@@ -386,4 +387,72 @@ func BenchmarkNew(b *testing.B) {
 			New()
 		}
 	})
+}
+
+func TestFromPartsTimestampBounds(t *testing.T) {
+	payload := make([]byte, payloadLengthInBytes)
+
+	// Valid exact epoch timestamp: May 13, 2014
+	epochTime := time.Unix(epochStamp, 0)
+	id, err := FromParts(epochTime, payload)
+	if err != nil {
+		t.Fatalf("expected epoch time to be valid, got: %v", err)
+	}
+	if id.Timestamp() != 0 {
+		t.Errorf("expected timestamp 0 at epoch, got: %d", id.Timestamp())
+	}
+
+	// Valid exact max timestamp
+	maxTime := time.Unix(epochStamp+math.MaxUint32, 0)
+	id, err = FromParts(maxTime, payload)
+	if err != nil {
+		t.Fatalf("expected max time to be valid, got: %v", err)
+	}
+	if id.Timestamp() != math.MaxUint32 {
+		t.Errorf("expected timestamp %d at maxTime, got: %d", uint32(math.MaxUint32), id.Timestamp())
+	}
+
+	// Invalid: 1 second before epoch
+	preEpoch := time.Unix(epochStamp-1, 0)
+	if _, err := FromParts(preEpoch, payload); err != errTime {
+		t.Errorf("expected errTime for pre-epoch time, got: %v", err)
+	}
+	if id := FromPartsOrNil(preEpoch, payload); id != Nil {
+		t.Errorf("expected Nil for FromPartsOrNil with pre-epoch time, got: %v", id)
+	}
+	if _, err := NewRandomWithTime(preEpoch); err != errTime {
+		t.Errorf("expected errTime for NewRandomWithTime with pre-epoch time, got: %v", err)
+	}
+
+	// Invalid: year 2000 (issue #58 reproduction)
+	y2k := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
+	if _, err := FromParts(y2k, payload); err != errTime {
+		t.Errorf("expected errTime for year 2000, got: %v", err)
+	}
+	if id := FromPartsOrNil(y2k, payload); id != Nil {
+		t.Errorf("expected Nil for FromPartsOrNil with year 2000, got: %v", id)
+	}
+
+	// Invalid: zero value time.Time{}
+	var zeroTime time.Time
+	if _, err := FromParts(zeroTime, payload); err != errTime {
+		t.Errorf("expected errTime for zero time, got: %v", err)
+	}
+
+	// Invalid: 1 second after max timestamp
+	postMax := time.Unix(epochStamp+math.MaxUint32+1, 0)
+	if _, err := FromParts(postMax, payload); err != errTime {
+		t.Errorf("expected errTime for post-max time, got: %v", err)
+	}
+	if id := FromPartsOrNil(postMax, payload); id != Nil {
+		t.Errorf("expected Nil for FromPartsOrNil with post-max time, got: %v", id)
+	}
+	if _, err := NewRandomWithTime(postMax); err != errTime {
+		t.Errorf("expected errTime for NewRandomWithTime with post-max time, got: %v", err)
+	}
+
+	// Invalid payload size still takes precedence or returns errPayloadSize
+	if _, err := FromParts(epochTime, make([]byte, 10)); err != errPayloadSize {
+		t.Errorf("expected errPayloadSize, got: %v", err)
+	}
 }
