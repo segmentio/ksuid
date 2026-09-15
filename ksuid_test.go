@@ -110,6 +110,30 @@ func TestIssue25(t *testing.T) {
 	}
 }
 
+func TestIssue74InvalidBase62(t *testing.T) {
+	// https://github.com/segmentio/ksuid/issues/74
+	// '?' is not in the base62 alphabet; the old decoder wrapped it to digit 2.
+	for _, s := range []string{
+		"0??????????????????????????",
+		"0!!!!!!!!!!!!!!!!!!!!!!!!!!",
+		"00000000000000000000000000/",
+		"0--------------------------",
+	} {
+		id, err := Parse(s)
+		if err != errStrValue {
+			t.Errorf("Parse(%q) err = %v, want errStrValue", s, err)
+		}
+		if !id.IsNil() {
+			t.Errorf("Parse(%q) id = %s, want Nil", s, id)
+		}
+	}
+
+	id, err := Parse(strings.Repeat("0", stringEncodedLength))
+	if err != nil || !id.IsNil() {
+		t.Fatalf("all-zeroes still parses: id=%s err=%v", id, err)
+	}
+}
+
 func TestEncodeAndDecode(t *testing.T) {
 	x := New()
 	builtFromEncodedString, err := Parse(x.String())

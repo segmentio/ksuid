@@ -66,12 +66,18 @@ func TestBase62Value(t *testing.T) {
 	s := base62Characters
 
 	for i := range s {
-		v := int(base62Value(s[i]))
+		v, ok := base62Value(s[i])
 
-		if v != i {
+		if !ok || int(v) != i {
 			t.Error("bad value:")
 			t.Log("<<<", i)
-			t.Log(">>>", v)
+			t.Log(">>>", v, ok)
+		}
+	}
+
+	for _, c := range []byte{0, ' ', '!', '?', '/', '@', '[', '`', '{', 0xff} {
+		if _, ok := base62Value(c); ok {
+			t.Errorf("invalid character %q accepted", c)
 		}
 	}
 }
