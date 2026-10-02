@@ -124,7 +124,7 @@ Designed to be integrated with other libraries, the `KSUID` type
 implements many standard library interfaces, including:
 
 * `Stringer`
-* `database/sql.Scanner` and `database/sql/driver.Valuer`
+* `database/sql.Scanner` and `database/sql/driver.Valuer` (`NullKSUID` is also provided for SQL NULL support)
 * `encoding.BinaryMarshal` and `encoding.BinaryUnmarshal`
 * `encoding.TextMarshal` and `encoding.TextUnmarshal`
   (`encoding/json` friendly!)
