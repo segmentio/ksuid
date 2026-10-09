@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"database/sql/driver"
+	"encoding"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -56,6 +57,11 @@ var (
 	Nil KSUID
 	// Represents the highest value a KSUID can have
 	Max = KSUID{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}
+
+	_ encoding.BinaryMarshaler   = KSUID{}
+	_ encoding.BinaryUnmarshaler = (*KSUID)(nil)
+	_ encoding.TextMarshaler     = KSUID{}
+	_ encoding.TextUnmarshaler   = (*KSUID)(nil)
 )
 
 // Append appends the string representation of i to b, returning a slice to a
@@ -132,6 +138,12 @@ func (i *KSUID) UnmarshalBinary(b []byte) error {
 	}
 	*i = id
 	return nil
+}
+
+// UnmarshalParam satisfies the BindUnmarshaler interface used by web
+// frameworks like Gin and Echo to decode query and form parameters.
+func (i *KSUID) UnmarshalParam(s string) error {
+	return i.UnmarshalText([]byte(s))
 }
 
 // Value converts the KSUID into a SQL driver value which can be used to

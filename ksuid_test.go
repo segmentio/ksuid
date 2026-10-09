@@ -2,9 +2,11 @@ package ksuid
 
 import (
 	"bytes"
+	"encoding"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"net/url"
 	"sort"
 	"strings"
 	"testing"
@@ -170,6 +172,111 @@ func TestMashalJSON(t *testing.T) {
 		t.Fatal(err)
 	} else if id1 != id2 {
 		t.Error(id1, "!=", id2)
+	}
+}
+
+func TestTextUnmarshaler(t *testing.T) {
+	var unmarshaler encoding.TextUnmarshaler
+	var id KSUID
+	unmarshaler = &id
+
+	validID := New()
+	if err := unmarshaler.UnmarshalText([]byte(validID.String())); err != nil {
+		t.Fatalf("unexpected error unmarshaling valid KSUID: %v", err)
+	}
+	if id != validID {
+		t.Fatalf("unmarshaled ID %v does not match expected %v", id, validID)
+	}
+
+	testCases := []struct {
+		name  string
+		input string
+	}{
+		{"empty", ""},
+		{"too short", "01234567890123456789012345"},
+		{"too long", "0123456789012345678901234567"},
+		{"invalid value", "aaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+		{"invalid character", "aWgEPTl1tmebfsQzFP4bxwgy80!"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var target KSUID
+			if err := target.UnmarshalText([]byte(tc.input)); err == nil {
+				t.Fatalf("expected error unmarshaling %q, got nil", tc.input)
+			}
+		})
+	}
+}
+
+func TestUnmarshalParam(t *testing.T) {
+	type bindUnmarshaler interface {
+		UnmarshalParam(param string) error
+	}
+
+	var binder bindUnmarshaler
+	var id KSUID
+	binder = &id
+
+	validID := New()
+	if err := binder.UnmarshalParam(validID.String()); err != nil {
+		t.Fatalf("unexpected error binding valid KSUID: %v", err)
+	}
+	if id != validID {
+		t.Fatalf("bound ID %v does not match expected %v", id, validID)
+	}
+
+	testCases := []struct {
+		name  string
+		input string
+	}{
+		{"empty", ""},
+		{"too short", "123"},
+		{"too long", "0123456789012345678901234567"},
+		{"invalid value", "aaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+		{"invalid character", "aWgEPTl1tmebfsQzFP4bxwgy80!"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var target KSUID
+			if err := target.UnmarshalParam(tc.input); err == nil {
+				t.Fatalf("expected error unmarshaling param %q, got nil", tc.input)
+			}
+		})
+	}
+}
+
+func TestQueryParamBinding(t *testing.T) {
+	type queryParams struct {
+		ID KSUID
+	}
+
+	bindQuery := func(values url.Values) (queryParams, error) {
+		var params queryParams
+		raw := values.Get("id")
+		if err := params.ID.UnmarshalParam(raw); err != nil {
+			return params, err
+		}
+		return params, nil
+	}
+
+	expected := New()
+	values := url.Values{}
+	values.Set("id", expected.String())
+
+	params, err := bindQuery(values)
+	if err != nil {
+		t.Fatalf("failed to bind query params: %v", err)
+	}
+	if params.ID != expected {
+		t.Fatalf("bound ID %v does not match expected %v", params.ID, expected)
+	}
+
+	badValues := url.Values{}
+	badValues.Set("id", "invalid-ksuid")
+	if _, err := bindQuery(badValues); err == nil {
+		t.Fatal("expected error binding invalid query param, got nil")
 	}
 }
 
