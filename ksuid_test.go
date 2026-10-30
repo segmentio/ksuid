@@ -102,10 +102,24 @@ func TestIssue25(t *testing.T) {
 	for _, s := range []string{
 		"aaaaaaaaaaaaaaaaaaaaaaaaaaa",
 		"aWgEPTl1tmebfsQzFP4bxwgy80!",
+		"00000000000000000000000000@",
+		"00000000000000000000000000_",
+		"00000000000000000000000000-",
+		"00000000000000000000000000 ",
+		"00000000000000000000000000=",
+		"00000000000000000000000000?",
+		"00000000000000000000000000[",
+		"00000000000000000000000000]",
+		"00000000000000000000000000^",
+		"00000000000000000000000000`",
+		"00000000000000000000000000{",
+		"00000000000000000000000000|",
+		"00000000000000000000000000}",
+		"00000000000000000000000000~",
 	} {
 		_, err := Parse(s)
 		if err != errStrValue {
-			t.Error("invalid KSUID representations cannot be successfully parsed, got err =", err)
+			t.Errorf("invalid KSUID representation %q cannot be successfully parsed, got err = %v", s, err)
 		}
 	}
 }

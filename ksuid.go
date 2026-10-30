@@ -366,7 +366,7 @@ func (id KSUID) Next() KSUID {
 	return v.ksuid(t)
 }
 
-// Prev returns the previoud KSUID before id.
+// Prev returns the previous KSUID before id.
 func (id KSUID) Prev() KSUID {
 	max := makeUint128(math.MaxUint64, math.MaxUint64)
 

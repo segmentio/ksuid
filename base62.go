@@ -18,14 +18,17 @@ var (
 )
 
 // Converts a base 62 byte into the number value that it represents.
+// If the byte is not a valid base 62 character, 0xFF is returned.
 func base62Value(digit byte) byte {
 	switch {
 	case digit >= '0' && digit <= '9':
 		return digit - '0'
 	case digit >= 'A' && digit <= 'Z':
 		return offsetUppercase + (digit - 'A')
-	default:
+	case digit >= 'a' && digit <= 'z':
 		return offsetLowercase + (digit - 'a')
+	default:
+		return 0xFF
 	}
 }
 
@@ -137,6 +140,12 @@ func fastDecodeBase62(dst []byte, src []byte) error {
 		base62Value(src[24]),
 		base62Value(src[25]),
 		base62Value(src[26]),
+	}
+
+	for _, c := range parts {
+		if c == 0xFF {
+			return errStrValue
+		}
 	}
 
 	n := len(dst)

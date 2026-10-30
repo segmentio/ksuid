@@ -74,6 +74,19 @@ func TestBase62Value(t *testing.T) {
 			t.Log(">>>", v)
 		}
 	}
+
+	valid := make(map[byte]bool)
+	for i := range s {
+		valid[s[i]] = true
+	}
+
+	for b := 0; b < 256; b++ {
+		if !valid[byte(b)] {
+			if v := base62Value(byte(b)); v != 0xFF {
+				t.Errorf("expected 0xFF for invalid base62 character %q (%d), got %d", b, b, v)
+			}
+		}
+	}
 }
 
 func TestFastAppendEncodeBase62(t *testing.T) {
