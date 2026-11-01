@@ -2,14 +2,47 @@ package ksuid
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
+
+func TestSetRandConcurrent(t *testing.T) {
+	randMutex.Lock()
+	previous := rander
+	randMutex.Unlock()
+	defer SetRand(previous)
+
+	start := make(chan struct{})
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		<-start
+		for i := 0; i < 1000; i++ {
+			SetRand(rand.Reader)
+			SetRand(nil)
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		<-start
+		for i := 0; i < 1000; i++ {
+			if _, err := NewRandom(); err != nil {
+				t.Error(err)
+				return
+			}
+		}
+	}()
+	close(start)
+	wg.Wait()
+}
 
 func TestConstructionTimestamp(t *testing.T) {
 	x := New()
