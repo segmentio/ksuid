@@ -298,6 +298,9 @@ func FromBytesOrNil(b []byte) KSUID {
 // thread-safe as in it won't cause corruption, there's no guarantee
 // on ordering.
 func SetRand(r io.Reader) {
+	randMutex.Lock()
+	defer randMutex.Unlock()
+
 	if r == nil {
 		rander = rand.Reader
 		return
