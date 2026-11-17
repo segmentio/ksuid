@@ -12,11 +12,14 @@ go get -u github.com/segmentio/ksuid
 ## What is a KSUID?
 
 KSUID is for K-Sortable Unique IDentifier. It is a kind of globally
-unique identifier similar to a [RFC 4122 UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier), built from the ground-up to be "naturally"
-sorted by generation timestamp without any special type-aware logic.
+unique identifier similar to a [RFC 4122 UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier), built from the ground-up to sort by generation timestamp under bytewise lexicographic comparison, without any special type-aware logic.
 
-In short, running a set of KSUIDs through the UNIX `sort` command will result
-in a list ordered by generation time.
+For example, `LC_ALL=C sort ksuid-list.txt` compares the text representation
+bytewise and orders KSUIDs by generation time. Locale-aware collations may
+order the base62 characters differently. For example, under `en_US.UTF-8`,
+`2SmasRGkif9qETAHwssB4GGYwdi` (later) may sort before
+`2STcKMQ7MGgoDxpX9A5WuaJlx8V` (earlier). A database's text collation may have
+the same issue; use a bytewise collation when ordering KSUID strings.
 
 ## Why use KSUIDs?
 
@@ -37,8 +40,8 @@ For a follow up read on the topic: [A brief history of UUID](https://segment.com
 Unlike the more ubiquitous UUIDv4, a KSUID contains a timestamp component
 that allows them to be loosely sorted by generation time. This is not a strong
 guarantee (an invariant) as it depends on wall clocks, but is still incredibly
-useful in practice. Both the binary and text representations will sort by
-creation time without any special sorting logic.
+useful in practice. Both the binary and text representations sort by creation
+time under bytewise lexicographic comparison, without any special sorting logic.
 
 ### 2. Collision-free, Coordination-free, Dependency-free
 
@@ -61,9 +64,10 @@ infeasibility in any practical implementation.
 
 ### 3. Highly Portable Representations
 
-The text *and* binary representations are lexicographically sortable, which
-allows them to be dropped into systems which do not natively support KSUIDs
-and retain their time-ordered property.
+The text *and* binary representations are bytewise lexicographically sortable,
+which allows them to be dropped into systems which do not natively support
+KSUIDs and retain their time-ordered property when those systems use bytewise
+ordering. A locale-aware collation can change the ordering of the text form.
 
 The text representation is an alphanumeric base62 encoding, so it "fits"
 anywhere alphanumeric strings are accepted. No delimiters are used, so
