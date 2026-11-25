@@ -38,8 +38,9 @@ const (
 )
 
 // KSUIDs are 20 bytes:
-//  00-03 byte: uint32 BE UTC timestamp with custom epoch
-//  04-19 byte: random "payload"
+//
+//	00-03 byte: uint32 BE UTC timestamp with custom epoch
+//	04-19 byte: random "payload"
 type KSUID [byteLength]byte
 
 var (
@@ -47,10 +48,11 @@ var (
 	randMutex  = sync.Mutex{}
 	randBuffer = [payloadLengthInBytes]byte{}
 
-	errSize        = fmt.Errorf("Valid KSUIDs are %v bytes", byteLength)
-	errStrSize     = fmt.Errorf("Valid encoded KSUIDs are %v characters", stringEncodedLength)
-	errStrValue    = fmt.Errorf("Valid encoded KSUIDs are bounded by %s and %s", minStringEncoded, maxStringEncoded)
-	errPayloadSize = fmt.Errorf("Valid KSUID payloads are %v bytes", payloadLengthInBytes)
+	errSize           = fmt.Errorf("Valid KSUIDs are %v bytes", byteLength)
+	errStrSize        = fmt.Errorf("Valid encoded KSUIDs are %v characters", stringEncodedLength)
+	errStrValue       = fmt.Errorf("Valid encoded KSUIDs are bounded by %s and %s", minStringEncoded, maxStringEncoded)
+	errPayloadSize    = fmt.Errorf("Valid KSUID payloads are %v bytes", payloadLengthInBytes)
+	errTimestampRange = fmt.Errorf("Valid KSUID timestamps are between %v and %v", time.Unix(epochStamp, 0), time.Unix(epochStamp+int64(math.MaxUint32), 0))
 
 	// Represents a completely empty (invalid) KSUID
 	Nil KSUID
@@ -201,8 +203,12 @@ func ParseOrNil(s string) KSUID {
 	return ksuid
 }
 
-func timeToCorrectedUTCTimestamp(t time.Time) uint32 {
-	return uint32(t.Unix() - epochStamp)
+func timeToCorrectedUTCTimestamp(t time.Time) (uint32, error) {
+	unix := t.Unix()
+	if unix < epochStamp || unix > epochStamp+int64(math.MaxUint32) {
+		return 0, errTimestampRange
+	}
+	return uint32(unix - epochStamp), nil
 }
 
 func correctedUTCTimestampToTime(ts uint32) time.Time {
@@ -225,6 +231,11 @@ func NewRandom() (ksuid KSUID, err error) {
 }
 
 func NewRandomWithTime(t time.Time) (ksuid KSUID, err error) {
+	ts, err := timeToCorrectedUTCTimestamp(t)
+	if err != nil {
+		return Nil, err
+	}
+
 	// Go's default random number generators are not safe for concurrent use by
 	// multiple goroutines, the use of the rander and randBuffer are explicitly
 	// synchronized here.
@@ -240,7 +251,6 @@ func NewRandomWithTime(t time.Time) (ksuid KSUID, err error) {
 		return
 	}
 
-	ts := timeToCorrectedUTCTimestamp(t)
 	binary.BigEndian.PutUint32(ksuid[:timestampLengthInBytes], ts)
 	return
 }
@@ -253,7 +263,10 @@ func FromParts(t time.Time, payload []byte) (KSUID, error) {
 
 	var ksuid KSUID
 
-	ts := timeToCorrectedUTCTimestamp(t)
+	ts, err := timeToCorrectedUTCTimestamp(t)
+	if err != nil {
+		return Nil, err
+	}
 	binary.BigEndian.PutUint32(ksuid[:timestampLengthInBytes], ts)
 
 	copy(ksuid[timestampLengthInBytes:], payload)

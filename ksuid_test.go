@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 	"testing"
@@ -304,12 +305,40 @@ func TestPrevNext(t *testing.T) {
 	}
 }
 
+func TestTimestampBounds(t *testing.T) {
+	payload := make([]byte, payloadLengthInBytes)
+	invalidTimes := map[string]time.Time{
+		"before epoch":        time.Unix(epochStamp-1, 0),
+		"after max timestamp": time.Unix(epochStamp+int64(math.MaxUint32)+1, 0),
+	}
+
+	for name, tm := range invalidTimes {
+		t.Run(name, func(t *testing.T) {
+			if _, err := FromParts(tm, payload); err == nil {
+				t.Fatal("FromParts accepted an out-of-range timestamp")
+			}
+			if _, err := NewRandomWithTime(tm); err == nil {
+				t.Fatal("NewRandomWithTime accepted an out-of-range timestamp")
+			}
+		})
+	}
+
+	for _, tm := range []time.Time{
+		time.Unix(epochStamp, 0),
+		time.Unix(epochStamp+int64(math.MaxUint32), 0),
+	} {
+		if _, err := FromParts(tm, payload); err != nil {
+			t.Fatalf("FromParts rejected a boundary timestamp: %v", err)
+		}
+	}
+}
+
 func TestGetTimestamp(t *testing.T) {
 	nowTime := time.Now()
 	x, _ := NewRandomWithTime(nowTime)
 	xTime := int64(x.Timestamp())
 	unix := nowTime.Unix()
-	if xTime != unix - epochStamp {
+	if xTime != unix-epochStamp {
 		t.Fatal(xTime, "!=", unix)
 	}
 }
